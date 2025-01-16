@@ -1,22 +1,31 @@
 import 'package:flutter/material.dart';
-import 'Company/CompanyNavBar.dart';
+import '../home.dart';
+import 'NavBar.dart';
 
 class Settings extends StatelessWidget {
+  final String role; // Added role parameter to make the page dynamic
+
+  const Settings({Key? key, required this.role}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Settings',
-            style: TextStyle(fontFamily: 'Roboto', fontSize: 25, color: Colors.black,
+        title: const Text(
+          'Settings',
+          style: TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 25,
+            color: Colors.black,
           ),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
-            Navigator.pop(context); // This will navigate to the previous page
+            Navigator.pop(context); // Navigate to the previous page
           },
         ),
-        backgroundColor: Color(0xFFFBD46D),
+        backgroundColor: const Color(0xFFFBD46D),
         elevation: 0,
       ),
       body: Padding(
@@ -25,52 +34,120 @@ class Settings extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Section(
-                title: 'Account',
-                children: [
-              ListTile(
-                leading: Icon(Icons.person),
-                title: Text('Edit profile', style: TextStyle(fontFamily: 'Roboto', fontSize: 18, fontWeight: FontWeight.normal, color: Colors.black)),
-                onTap: () {},
-              ),
-              ListTile(
-                leading: Icon(Icons.security),
-                title: Text('Security', style: TextStyle(fontFamily: 'Roboto', fontSize: 18, fontWeight: FontWeight.normal, color: Colors.black)),
-                onTap: () {},
-              ),
-              ListTile(
-                leading: Icon(Icons.notifications),
-                title: Text('Notifications', style: TextStyle(fontFamily: 'Roboto', fontSize: 18, fontWeight: FontWeight.normal, color: Colors.black)),
-                onTap: () {},
-              ),
-              ListTile(
-                leading: Icon(Icons.lock),
-                title: Text('Privacy', style: TextStyle(fontFamily: 'Roboto', fontSize: 18, fontWeight: FontWeight.normal, color: Colors.black)),
-                onTap: () {},
-              ),
-            ]),
-            SizedBox(height: 16),
-            Section(title: 'Actions', children: [
-              ListTile(
-                leading: Icon(Icons.flag),
-                title: Text('Report a problem', style: TextStyle(fontFamily: 'Roboto', fontSize: 18, fontWeight: FontWeight.normal, color: Colors.black)),
-                onTap: () {},
-              ),
-              ListTile(
-                leading: Icon(Icons.person_add),
-                title: Text('Add account', style: TextStyle(fontFamily: 'Roboto', fontSize: 18, fontWeight: FontWeight.normal, color: Colors.black)),
-                onTap: () {},
-              ),
-              ListTile(
-                leading: Icon(Icons.logout),
-                title: Text('Log out', style: TextStyle(fontFamily: 'Roboto', fontSize: 18, fontWeight: FontWeight.normal, color: Colors.black)),
-                onTap: () {},
-              ),
-            ]),
+              title: 'Account',
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.person),
+                  title: const Text(
+                    'Edit profile',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 18,
+                      fontWeight: FontWeight.normal,
+                      color: Colors.black,
+                    ),
+                  ),
+                  onTap: () {},
+                ),
+                ListTile(
+                  leading: const Icon(Icons.security),
+                  title: const Text(
+                    'Security',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 18,
+                      fontWeight: FontWeight.normal,
+                      color: Colors.black,
+                    ),
+                  ),
+                  onTap: () {},
+                ),
+                ListTile(
+                  leading: const Icon(Icons.notifications),
+                  title: const Text(
+                    'Notifications',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 18,
+                      fontWeight: FontWeight.normal,
+                      color: Colors.black,
+                    ),
+                  ),
+                  onTap: () {},
+                ),
+                ListTile(
+                  leading: const Icon(Icons.lock),
+                  title: const Text(
+                    'Privacy',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 18,
+                      fontWeight: FontWeight.normal,
+                      color: Colors.black,
+                    ),
+                  ),
+                  onTap: () {},
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Section(
+              title: 'Actions',
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.flag),
+                  title: const Text(
+                    'Report a problem',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 18,
+                      fontWeight: FontWeight.normal,
+                      color: Colors.black,
+                    ),
+                  ),
+                  onTap: () {},
+                ),
+                ListTile(
+                  leading: const Icon(Icons.person_add),
+                  title: const Text(
+                    'Add account',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 18,
+                      fontWeight: FontWeight.normal,
+                      color: Colors.black,
+                    ),
+                  ),
+                  onTap: () {},
+                ),
+                ListTile(
+                  leading: const Icon(Icons.logout),
+                  title: const Text(
+                    'Log out',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 18,
+                      fontWeight: FontWeight.normal,
+                      color: Colors.black,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const Home(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ],
         ),
       ),
-      bottomNavigationBar: CompanyNavBar(
-        currentIndex: 0, // Set the initial tab index
+      bottomNavigationBar: NavBar(
+        currentIndex: 2, // Set index for settings
+        role: role, // Pass the role to the reusable NavBar
       ),
     );
   }
@@ -92,12 +169,12 @@ class Section extends StatelessWidget {
       children: [
         Text(
           title,
-          style: TextStyle(
+          style: const TextStyle(
             fontFamily: 'Roboto',
             fontSize: 20,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
             color: Colors.brown[50],

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import 'CompanyNavBar.dart';
+import '../NavBar.dart';
 
 class CompanyAgentManagement extends StatelessWidget {
+  final String role; // Add the role parameter for customization
+
+  CompanyAgentManagement({Key? key, required this.role}) : super(key: key);
+
   final List<Map<String, String>> agents = [
     {
       'name': 'Alisya Tomes',
@@ -34,8 +38,12 @@ class CompanyAgentManagement extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Agent Management',
-          style: TextStyle(fontFamily: 'Roboto', fontSize: 25, color: Colors.black),
+          'Honey Agent',
+          style: TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 25,
+            color: Colors.black,
+          ),
         ),
         backgroundColor: Colors.amber[300],
         automaticallyImplyLeading: true,
@@ -47,7 +55,11 @@ class CompanyAgentManagement extends StatelessWidget {
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Search by name, ID... etc',
-                hintStyle: const TextStyle(fontFamily: 'Roboto', fontSize: 16, color: Colors.grey),
+                hintStyle: const TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 16,
+                  color: Colors.grey,
+                ),
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -79,7 +91,12 @@ class CompanyAgentManagement extends StatelessWidget {
                       ),
                       title: Text(
                         agent['name']!,
-                        style: const TextStyle(fontFamily: 'Roboto', fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 20,
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,7 +107,11 @@ class CompanyAgentManagement extends StatelessWidget {
                               const SizedBox(width: 4),
                               Text(
                                 agent['id']!,
-                                style: const TextStyle(fontFamily: 'Roboto', fontSize: 13, color: Colors.black),
+                                style: const TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 13,
+                                  color: Colors.black,
+                                ),
                               ),
                             ],
                           ),
@@ -100,7 +121,11 @@ class CompanyAgentManagement extends StatelessWidget {
                               const SizedBox(width: 4),
                               Text(
                                 agent['location']!,
-                                style: const TextStyle(fontFamily: 'Roboto', fontSize: 13, color: Colors.black),
+                                style: const TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 13,
+                                  color: Colors.black,
+                                ),
                               ),
                             ],
                           ),
@@ -110,7 +135,11 @@ class CompanyAgentManagement extends StatelessWidget {
                               const SizedBox(width: 4),
                               Text(
                                 'Joined on ${agent['joinedDate']}',
-                                style: const TextStyle(fontFamily: 'Roboto', fontSize: 13, color: Colors.black),
+                                style: const TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 13,
+                                  color: Colors.black,
+                                ),
                               ),
                             ],
                           ),
@@ -125,8 +154,9 @@ class CompanyAgentManagement extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: CompanyNavBar(
+      bottomNavigationBar: NavBar(
         currentIndex: 0, // Set the initial tab index
+        role: role, // Pass the role to the NavBar
       ),
     );
   }

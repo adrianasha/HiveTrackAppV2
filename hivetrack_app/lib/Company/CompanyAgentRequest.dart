@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import 'CompanyNavBar.dart';
+import '../NavBar.dart';
 
 class CompanyAgentRequest extends StatelessWidget {
   // Define a list of details
@@ -79,8 +78,9 @@ class CompanyAgentRequest extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: CompanyNavBar(
+      bottomNavigationBar: NavBar(
         currentIndex: 0, // Set the initial tab index
+        role: 'Company', // Pass the role to the reusable NavBar
       ),
     );
   }

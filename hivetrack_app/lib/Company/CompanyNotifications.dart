@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'CompanyNavBar.dart';
+import '../NavBar.dart';
 import 'CompanyAgentRequest.dart'; // Import the page to navigate to
 
 class CompanyNotifications extends StatelessWidget {
+  final String role; // Add the role parameter for the NavBar
+
+  CompanyNotifications({Key? key, required this.role}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -11,7 +15,7 @@ class CompanyNotifications extends StatelessWidget {
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
-            Navigator.pop(context); // This will navigate to the previous page
+            Navigator.pop(context); // Use pop to go back to the previous page
           },
         ),
         title: Text(
@@ -54,7 +58,8 @@ class CompanyNotifications extends StatelessWidget {
             SizedBox(height: 8),
             GestureDetector(
               onTap: () {
-                // Handle "See all" tap
+                // Handle "See all" tap, you can modify this action
+                print('See all requests tapped');
               },
               child: Text(
                 'See all (3)...',
@@ -64,8 +69,9 @@ class CompanyNotifications extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: CompanyNavBar(
-        currentIndex: 0, // Set the initial tab index
+      bottomNavigationBar: NavBar(
+        currentIndex: 1, // Set the index for the Notifications tab (assuming index 1 for this example)
+        role: role, // Pass the role to the reusable NavBar
       ),
     );
   }

@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hivetrack_app/startPage.dart';
 
-void main() {
-  runApp(const Home());
-}
-
 class Home extends StatelessWidget {
   const Home({super.key});
 
@@ -29,7 +25,7 @@ class SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Navigate to Welcome screen after 2 seconds
     Future.delayed(const Duration(seconds: 3), () {
-      Navigator.pushReplacement(
+      Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => Startpage()),
       );

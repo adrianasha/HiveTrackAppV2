@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-
-import 'Company/CompanyAccCreation.dart';
-import 'Company/CompanyLogin.dart';
+import 'createAccount.dart';
+import 'loginPage.dart';
 
 class Startpage extends StatefulWidget {
   @override
@@ -30,11 +29,7 @@ class StartpageState extends State<Startpage> {
               Center(
                 child: Text(
                   "I’m using HiveTrack as the...",
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 25,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                  style: TextStyle(fontFamily: 'Roboto', fontSize: 25, fontWeight: FontWeight.bold, color: Colors.black87,
                   ),
                 ),
               ),
@@ -104,10 +99,7 @@ class StartpageState extends State<Startpage> {
                   ),
                   child: const Text(
                     "Continue",
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 17,
-                      color: Colors.black,
+                    style: TextStyle(fontFamily: 'Roboto', fontSize: 17, color: Colors.black,
                     ),
                   ),
                 ),
@@ -142,10 +134,10 @@ class StartpageState extends State<Startpage> {
             children: [
               ElevatedButton(
                 onPressed: () {
-                  Navigator.push(
+                  Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const CompanyLogin(),
+                      builder: (context) => LoginPage(role: selectedRole),
                     ),
                   );
                 },
@@ -175,10 +167,10 @@ class StartpageState extends State<Startpage> {
               ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  Navigator.push(
+                  Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => AccountCreation(role: selectedRole), // Pass the selected role
+                      builder: (context) => CreateAccount(role: selectedRole), // Pass the selected role
                     ),
                   );
                 },
