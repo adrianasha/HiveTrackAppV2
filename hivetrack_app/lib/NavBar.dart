@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hivetrack_app/Company/CompanyNotifications.dart';
 import '../Agents/AgentDashboard.dart';
 import '../Dropships/DropshipDashboard.dart';
 import '../settings.dart';
@@ -35,24 +36,39 @@ class NavBar extends StatelessWidget {
         switch (index) {
           case 0:
             if (role == "Company") {
-              Navigator.pushReplacement(
+              Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => CompanyDashboard()),
               );
             } else if (role == "Agent") {
-              Navigator.pushReplacement(
+              Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => AgentDashboard()),
               );
-            } else if (role == "Dropship Agent") {
-              Navigator.pushReplacement(
+            } else if (role == "Dropship_Agent") {
+              Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => DropshipDashboard()),
               );
             }
             break;
           case 1:
-          // Notifications placeholder; can be implemented per role
+            if (role == "Company") {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CompanyNotifications(role: role)),
+              );
+            } else if (role == "Agent") {
+              // Navigator.pushReplacement(
+              //   context,
+              //   MaterialPageRoute(builder: (context) => AgentDashboard()),
+              //);
+            } else if (role == "Dropship_Agent") {
+              // Navigator.pushReplacement(
+              //   context,
+              //   MaterialPageRoute(builder: (context) => DropshipDashboard()),
+              // );
+            }
             break;
           case 2:
             Navigator.pushReplacement(

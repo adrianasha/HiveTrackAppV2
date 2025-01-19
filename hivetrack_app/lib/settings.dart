@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../home.dart';
+import 'package:hivetrack_app/startPage.dart';
 import 'NavBar.dart';
+import 'SettingsProfile.dart';
 
 class Settings extends StatelessWidget {
   final String role; // Added role parameter to make the page dynamic
@@ -13,16 +15,13 @@ class Settings extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Settings',
-          style: TextStyle(
-            fontFamily: 'Roboto',
-            fontSize: 25,
-            color: Colors.black,
+          style: TextStyle(fontFamily: 'Roboto', fontSize: 25, color: Colors.black,
           ),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
-            Navigator.pop(context); // Navigate to the previous page
+            Navigator.pop(context);
           },
         ),
         backgroundColor: const Color(0xFFFBD46D),
@@ -40,32 +39,22 @@ class Settings extends StatelessWidget {
                   leading: const Icon(Icons.person),
                   title: const Text(
                     'Edit profile',
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 18,
-                      fontWeight: FontWeight.normal,
-                      color: Colors.black,
+                    style: TextStyle(fontFamily: 'Roboto', fontSize: 18, fontWeight: FontWeight.normal, color: Colors.black,
                     ),
                   ),
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SettingsProfile(role: 'Company'), // Or 'Agent', 'Dropship Agent'
+                      ),
+                    );
+                  },
                 ),
                 ListTile(
                   leading: const Icon(Icons.security),
                   title: const Text(
                     'Security',
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 18,
-                      fontWeight: FontWeight.normal,
-                      color: Colors.black,
-                    ),
-                  ),
-                  onTap: () {},
-                ),
-                ListTile(
-                  leading: const Icon(Icons.notifications),
-                  title: const Text(
-                    'Notifications',
                     style: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 18,
@@ -108,19 +97,6 @@ class Settings extends StatelessWidget {
                   onTap: () {},
                 ),
                 ListTile(
-                  leading: const Icon(Icons.person_add),
-                  title: const Text(
-                    'Add account',
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 18,
-                      fontWeight: FontWeight.normal,
-                      color: Colors.black,
-                    ),
-                  ),
-                  onTap: () {},
-                ),
-                ListTile(
                   leading: const Icon(Icons.logout),
                   title: const Text(
                     'Log out',
@@ -131,13 +107,18 @@ class Settings extends StatelessWidget {
                       color: Colors.black,
                     ),
                   ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const Home(),
-                      ),
-                    );
+                  onTap: () async {
+                    try {
+                      await FirebaseAuth.instance.signOut();
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Startpage(),
+                        ),
+                      );
+                    } catch (e) {
+                      print("Error logging out: $e");
+                    }
                   },
                 ),
               ],

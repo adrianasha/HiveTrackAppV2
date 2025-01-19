@@ -43,7 +43,6 @@ class StartpageState extends State<Startpage> {
                 onTap: () {
                   setState(() {
                     selectedRole = "Company";
-                    print("Selected Role : Company");
                   });
                 },
               ),
@@ -57,21 +56,19 @@ class StartpageState extends State<Startpage> {
                 onTap: () {
                   setState(() {
                     selectedRole = "Agent";
-                    print("Selected Role : Agent");
                   });
                 },
               ),
               const SizedBox(height: 20),
               roleTile(
-                role: "Dropship Agent", // Added role parameter
+                role: "Dropship_Agent", // Added role parameter
                 icon: Icons.groups,
                 title: "Dropship Agent",
                 subtitle: "Manage and sell products.",
-                isSelected: selectedRole == "Dropship Agent",
+                isSelected: selectedRole == "Dropship_Agent",
                 onTap: () {
                   setState(() {
-                    selectedRole = "Dropship Agent";
-                    print("Selected Role : Dropship Agent");
+                    selectedRole = "Dropship_Agent";
                   });
                 },
               ),
@@ -83,7 +80,7 @@ class StartpageState extends State<Startpage> {
                       showAccountDialog(); // Show dialog if the role is Company
                     } else if (selectedRole == "Agent") {
                       showAccountDialog();
-                    } else if (selectedRole == "Dropship Agent"){
+                    } else if (selectedRole == "Dropship_Agent"){
                       showAccountDialog();
                     }
                   },
@@ -152,10 +149,7 @@ class StartpageState extends State<Startpage> {
                   children: const [
                     Text(
                       "Yes! Log in",
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 18,
-                        color: Colors.black,
+                      style: TextStyle(fontFamily: 'Roboto', fontSize: 18, color: Colors.black,
                       ),
                     ),
                     SizedBox(width: 8),

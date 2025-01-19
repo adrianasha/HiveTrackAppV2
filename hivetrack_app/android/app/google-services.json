@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "311441489274",
+    "project_id": "hivetrack-app",
+    "storage_bucket": "hivetrack-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:311441489274:android:4667d931ee39285689aac3",
+        "android_client_info": {
+          "package_name": "com.example.hivetrack_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzz7yNH1Mmuzki6MR_B7bXXl85F94mZ7Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

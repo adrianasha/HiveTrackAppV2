@@ -1,4 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'loginPage.dart';
+import 'EssentialFunctions.dart';
 
 class CreateAccount extends StatefulWidget {
   final String role; // Specify the role: Company, Agent, or Dropship Agent
@@ -11,15 +16,15 @@ class CreateAccount extends StatefulWidget {
 
 class CreateAccountState extends State<CreateAccount> {
   final _emailController = TextEditingController();
-  final _idController = TextEditingController(); // Controller for ID (only for Company)
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _telephoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _fullNameController = TextEditingController();
+  final _companyIdController = TextEditingController(); // New controller for Company ID
   final _formKey = GlobalKey<FormState>();
 
-  void _createAccount() {
+  void _createAccount() async {
     if (_formKey.currentState!.validate()) {
       if (_passwordController.text != _confirmPasswordController.text) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -33,16 +38,109 @@ class CreateAccountState extends State<CreateAccount> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${widget.role} account created successfully!',
-            style: const TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.grey),
+      try {
+        UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
+
+        if (widget.role == 'Agent' || widget.role == 'Dropship_Agent') {
+          await FirebaseFirestore.instance.collection(widget.role).doc(userCredential.user!.uid).set({
+            'company_id': _companyIdController.text.trim(), // Use the Company ID entered by the user
+            'email': _emailController.text.trim(),
+            'name': _fullNameController.text.trim(),
+            'telephone': _telephoneController.text.trim(),
+            'address': _addressController.text.trim(),
+            'created_at': FieldValue.serverTimestamp(),
+          });
+          _showPopup();
+        } else {
+          await FirebaseFirestore.instance.collection(widget.role).doc(
+              userCredential.user!.uid).set({
+            'company_id': generateCustomId(6, false),
+            'email': _emailController.text.trim(),
+            'name': _fullNameController.text.trim(),
+            'telephone': _telephoneController.text.trim(),
+            'address': _addressController.text.trim(),
+            'created_at': FieldValue.serverTimestamp(),
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '${widget.role} account created successfully!',
+                style: const TextStyle(
+                    fontFamily: 'Roboto', fontSize: 14, color: Colors.grey),
+              ),
+            ),
+          );
+          Navigator.pop(context);
+        }
+
+        await FirebaseAuth.instance.signOut();
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage(role: widget.role)),
+        );
+      } on FirebaseAuthException catch (e) {
+        String errorMessage;
+        if (e.code == 'email-already-in-use') {
+          errorMessage = 'This email is already in use.';
+        } else if (e.code == 'invalid-email') {
+          errorMessage = 'The email address is not valid.';
+        } else if (e.code == 'weak-password') {
+          errorMessage = 'The password is too weak.';
+        } else {
+          errorMessage = 'An error occurred. Please try again.';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              errorMessage,
+              style: const TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.grey),
+            ),
           ),
-        ),
-      );
-      Navigator.pop(context); // Navigate back to the previous page
+        );
+      } catch (e) {
+        // Handle Firestore-specific errors or unexpected issues
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to add user data. Error: $e',
+              style: const TextStyle(
+                  fontFamily: 'Roboto', fontSize: 14, color: Colors.grey),
+            ),
+          ),
+        );
+      }
     }
+  }
+
+  void _showPopup() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing the popup by tapping outside
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          content: const Text(
+            'We will review your registration shortly...',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontFamily: 'Roboto', fontSize: 15, color: Colors.black),
+          ),
+        );
+      },
+    );
+
+    // Close the popup after 3 seconds
+    Timer(const Duration(seconds: 3), () {
+      Navigator.of(context).pop(); // Close the popup
+      Navigator.pop(context); // Navigate back to the previous page
+    });
   }
 
   @override
@@ -62,7 +160,27 @@ class CreateAccountState extends State<CreateAccount> {
                     'Create ${widget.role} Account',
                     style: const TextStyle(fontFamily: 'Roboto', fontSize: 20, color: Colors.black),
                   ),
-                  // Use padding instead of SizedBox for consistent spacing
+                  // Add Company ID field at the top for Agent and Dropship Agent
+                  if (widget.role == 'Agent' || widget.role == 'Dropship_Agent')
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
+                      child: TextFormField(
+                        controller: _companyIdController,
+                        validator: (value) => value != null && value.isNotEmpty
+                            ? null
+                            : 'Enter Company ID',
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          hintText: 'Company ID',
+                          hintStyle: const TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.grey),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                        style: const TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black),
+                      ),
+                    ),
                   Padding(
                     padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
                     child: TextFormField(
@@ -99,27 +217,6 @@ class CreateAccountState extends State<CreateAccount> {
                       style: const TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black),
                     ),
                   ),
-                  // Conditionally render the ID field for Company only
-                  if (widget.role == 'Company')
-                    Padding(
-                      padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
-                      child: TextFormField(
-                        controller: _idController,
-                        validator: (value) => value != null && value.isNotEmpty
-                            ? null
-                            : 'Enter ${widget.role} ID',
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Colors.white,
-                          hintText: '${widget.role} ID',
-                          hintStyle: const TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.grey),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        style: const TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black),
-                      ),
-                    ),
                   Padding(
                     padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
                     child: TextFormField(
@@ -203,15 +300,15 @@ class CreateAccountState extends State<CreateAccount> {
                   ElevatedButton(
                     onPressed: _createAccount,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFBD46D),
-                      padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 15),
+                      backgroundColor: Colors.blue,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(20),
                       ),
+                      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 50.0),
                     ),
                     child: const Text(
                       'Create Account',
-                      style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black),
+                      style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.white),
                     ),
                   ),
                 ],

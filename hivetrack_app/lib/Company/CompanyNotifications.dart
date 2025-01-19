@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hivetrack_app/Company/CompanyDropshipRequest.dart';
 import '../NavBar.dart';
 import 'CompanyAgentRequest.dart'; // Import the page to navigate to
 
@@ -26,47 +27,92 @@ class CompanyNotifications extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Agent Requests',
-              style: TextStyle(fontFamily: 'Roboto', fontSize: 20, color: Colors.black),
-            ),
-            SizedBox(height: 16),
-            RequestTile(
-              name: 'Syaamil Thaqif',
-              subtitle: 'is requesting to be an agent...',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => CompanyAgentRequest()),
-                );
-              },
-            ),
-            SizedBox(height: 8),
-            RequestTile(
-              name: 'Karena Kapur',
-              subtitle: 'is requesting to be an agent...',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => CompanyAgentRequest()),
-                );
-              },
-            ),
-            SizedBox(height: 8),
-            GestureDetector(
-              onTap: () {
-                // Handle "See all" tap, you can modify this action
-                print('See all requests tapped');
-              },
-              child: Text(
-                'See all (3)...',
-                style: TextStyle(fontFamily: 'Roboto', fontSize: 15, color: Colors.black, fontWeight: FontWeight.bold),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Agent Requests Section
+              Text(
+                'Agent Requests',
+                style: TextStyle(fontFamily: 'Roboto', fontSize: 20, color: Colors.black),
               ),
-            ),
-          ],
+              SizedBox(height: 16),
+              RequestTile(
+                name: 'Syaamil Thaqif',
+                subtitle: 'is requesting to be an agent...',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => CompanyAgentRequest()),
+                  );
+                },
+              ),
+              SizedBox(height: 8),
+              RequestTile(
+                name: 'Karena Kapur',
+                subtitle: 'is requesting to be an agent...',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => CompanyAgentRequest()),
+                  );
+                },
+              ),
+              SizedBox(height: 8),
+              GestureDetector(
+                onTap: () {
+                  // Handle "See all" tap, you can modify this action
+                  print('See all agent requests tapped');
+                },
+                child: Text(
+                  'See all (3)...',
+                  style: TextStyle(fontFamily: 'Roboto', fontSize: 15, color: Colors.black, fontWeight: FontWeight.bold),
+                ),
+              ),
+              SizedBox(height: 32),
+
+              // Dropship Agent Requests Section
+              Text(
+                'Dropship Agent Requests',
+                style: TextStyle(fontFamily: 'Roboto', fontSize: 20, color: Colors.black),
+              ),
+              SizedBox(height: 16),
+              RequestTile(
+                name: 'Yusuf Aiman',
+                subtitle: 'is requesting to be a dropship agent...',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CompanyDropshipRequest(role: role), // Pass 'role' here
+                    ),
+                  );
+                },
+              ),
+              SizedBox(height: 8),
+              RequestTile(
+                name: 'Kapur',
+                subtitle: 'is requesting to be a dropship agent...',
+                onTap: () {
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(builder: (context) => CompanyAgentRequest()),
+                  // );
+                },
+              ),
+              SizedBox(height: 8),
+              GestureDetector(
+                onTap: () {
+                  // Handle "See all" tap, you can modify this action
+                  print('See all dropship requests tapped');
+                },
+                child: Text(
+                  'See all (3)...',
+                  style: TextStyle(fontFamily: 'Roboto', fontSize: 15, color: Colors.black, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: NavBar(

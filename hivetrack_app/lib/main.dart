@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'home.dart';
+import 'package:firebase_core/firebase_core.dart';  // Import Firebase core
+import 'home.dart';  // Import your home screen
 
-void main()  {
-  runApp(const Home());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();  // Initialize Firebase
+  runApp(Home());
 }

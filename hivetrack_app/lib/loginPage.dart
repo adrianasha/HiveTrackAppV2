@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'Agents/AgentDashboard.dart';
 import 'Company/CompanyDashboard.dart';
 import 'Dropships/DropshipDashboard.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginPage extends StatefulWidget {
   final String role; // Specify the role: Company, Agent, Dropship Agent
@@ -41,7 +42,7 @@ class LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 10),
               // Show this message only for Agent and Dropship Agent
-              if (widget.role == 'Agent' || widget.role == 'Dropship Agent')
+              if (widget.role == 'Agent' || widget.role == 'Dropship_Agent')
                 Text(
                   'Our honey ${widget.role.toLowerCase()}.',
                   style: const TextStyle(fontFamily: 'Roboto', fontSize: 18, color: Colors.grey),
@@ -55,7 +56,7 @@ class LoginPageState extends State<LoginPage> {
                     // Email Input
                     TextFormField(
                       controller: _emailController,
-                      validator: (value) => value != null && value.contains('@') ? null : 'Enter a valid email',
+                      // validator: (value) => value != null && value.contains('@') ? null : 'Enter a valid email',
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
@@ -71,9 +72,9 @@ class LoginPageState extends State<LoginPage> {
                     TextFormField(
                       controller: _passwordController,
                       obscureText: true,
-                      validator: (value) => value != null && value.length >= 6
-                          ? null
-                          : 'Password must be at least 6 characters',
+                      // validator: (value) => value != null && value.length >= 6
+                      //     ? null
+                      //     : 'Password must be at least 6 characters',
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
@@ -101,29 +102,59 @@ class LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 30),
                     // Login Button
                     ElevatedButton(
-                      onPressed: () {
-                        //if (_formKey.currentState!.validate()) {
-                          // Navigate to the respective dashboard based on role
+                      onPressed: () async {
+                        try {
+                          String email = _emailController.text.trim();
+                          String password = _passwordController.text.trim();
+
+                          // if (email.isEmpty || password.isEmpty) {
+                          //   ScaffoldMessenger.of(context).showSnackBar(
+                          //     SnackBar(content: Text('Email and password cannot be empty')),
+                          //   );
+                          //   return;
+                          // }
+                          //
+                          // UserCredential userCredential = await FirebaseAuth.instance
+                          //     .signInWithEmailAndPassword(email: email, password: password);
+
                           if (widget.role == 'Company') {
-                            Navigator.push(
+                            Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
                                   builder: (context) => const CompanyDashboard()),
                             );
                           } else if (widget.role == 'Agent') {
-                            Navigator.push(
+                            Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
                                   builder: (context) => const AgentDashboard()),
                             );
-                          } else if (widget.role == 'Dropship Agent') {
-                            Navigator.push(
+                          } else if (widget.role == 'Dropship_Agent') {
+                            Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
                                   builder: (context) => DropshipDashboard()),
                             );
                           }
-                        //}
+                        } on FirebaseAuthException catch (e) {
+                          // Handle FirebaseAuth errors
+                          String errorMessage;
+                          if (e.code == 'user-not-found') {
+                            errorMessage = 'No user found for this email.';
+                          } else if (e.code == 'wrong-password') {
+                            errorMessage = 'Incorrect password.';
+                          } else {
+                            errorMessage = 'Login failed: ${e.message}';
+                          }
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(errorMessage, style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.grey))),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('An unexpected error occurred: $e', style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.grey))),
+                          );
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFBD46D),
