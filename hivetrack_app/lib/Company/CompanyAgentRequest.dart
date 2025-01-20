@@ -1,18 +1,29 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../NavBar.dart';
 
 class CompanyAgentRequest extends StatelessWidget {
-  // Define a list of details
-  final List<Map<String, String>> agentDetails = [
-    {'label': 'Full Name', 'value': 'Ahmad Syaamil Thaqif Bin Shalizan'},
-    {'label': 'Agent ID', 'value': 'AG1005'},
-    {'label': 'Email', 'value': 'thaqif@gmail.com'},
-    {'label': 'Phone number', 'value': '012-7358442'},
-    {'label': 'Address', 'value': '35, Jalan Damai Budi 6, Alam Damai, 56000 Cheras, Kuala Lumpur'},
-  ];
+  final Map<String, dynamic> dataMap;
+
+  CompanyAgentRequest({super.key, required this.dataMap});
 
   @override
   Widget build(BuildContext context) {
+
+    String name = dataMap["name"] ?? 'Unknown';
+    String iD = dataMap["id"] ?? 'No ID provided';
+    String email = dataMap["email"] ?? 'No email provided';
+    String phoneNumber = dataMap["telephone"] ?? 'No phone number provided';
+    String address = dataMap["address"] ?? 'No address provided';
+
+    final List<Map<String, String>> agentDetails = [
+      {'label': 'Full Name', 'value': name},
+      {'label': 'ID', 'value': iD},
+      {'label': 'Email', 'value': email},
+      {'label': 'Phone number', 'value': phoneNumber},
+      {'label': 'Address', 'value': address},
+    ];
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.amber[300],
@@ -49,7 +60,7 @@ class CompanyAgentRequest extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Dynamically generate the InfoRows
+
                   ...agentDetails.map((detail) => InfoRow(
                     label: detail['label']!,
                     value: detail['value']!,
@@ -62,8 +73,18 @@ class CompanyAgentRequest extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    onPressed: () {
-                      // Handle accept request action
+                    onPressed: () async {
+                      try {
+                        final docRef = FirebaseFirestore.instance
+                            .collection(dataMap["role"])
+                            .doc(dataMap["user_id"]);
+                        await docRef.update({
+                          'verified': true,
+                        });
+                        Navigator.pop(context);
+                      } catch (e) {
+                        print('Error updating verified field: $e');
+                      }
                     },
                     child: Center(
                       child: Text(

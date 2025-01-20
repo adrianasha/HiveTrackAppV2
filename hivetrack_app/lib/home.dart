@@ -4,7 +4,6 @@ import 'package:hivetrack_app/Company/CompanyDashboard.dart';
 import 'package:hivetrack_app/Dropships/DropshipDashboard.dart';
 import 'package:hivetrack_app/EssentialFunctions.dart';
 import 'package:hivetrack_app/startPage.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key});
@@ -26,14 +25,14 @@ class Home extends StatelessWidget {
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
-  void navigateToDashboard(BuildContext context, String parentName) {
+  void navigateToDashboard(BuildContext context, String parentName, Map<String, dynamic> userData) {
     Widget dashboard;
 
     if (parentName == 'Company') {
       dashboard = const CompanyDashboard();
-    } else if (parentName == 'Agent') {
+    } else if (parentName == 'Agent' && userData["verified"] == true) {
       dashboard = const AgentDashboard();
-    } else if (parentName == 'Dropship_Agent') {
+    } else if (parentName == 'Dropship_Agent' && userData["verified"] == true) {
       dashboard = DropshipDashboard();
     } else {
       dashboard = Startpage();
@@ -51,16 +50,17 @@ class SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     Future.delayed(const Duration(seconds: 3), () async {
       try {
-        User? user = FirebaseAuth.instance.currentUser;
-        if (user != null) {
-          Map<String, dynamic> UserData = await getUserDataWithParentName(user.uid);
-          navigateToDashboard(context, UserData['parent_name']);
+        String? userID = await getCurrentAuthUserId();
+        if (userID != null) {
+          Map<String, dynamic> UserData = await getUserDataWithParentName(userID);
+          print(UserData["user_data"]);
+          navigateToDashboard(context, UserData['parent_name'], UserData["user_data"]);
         } else {
-          navigateToDashboard(context, ""); // Navigate to Startpage
+          navigateToDashboard(context, "", {}); // Navigate to Startpage
         }
       } catch (e) {
         print("Error: $e");
-        navigateToDashboard(context, ""); // Navigate to Startpage
+        navigateToDashboard(context, "", {}); // Navigate to Startpage
       }
     });
 

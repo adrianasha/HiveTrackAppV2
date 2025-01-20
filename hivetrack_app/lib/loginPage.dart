@@ -56,7 +56,7 @@ class LoginPageState extends State<LoginPage> {
                     // Email Input
                     TextFormField(
                       controller: _emailController,
-                      // validator: (value) => value != null && value.contains('@') ? null : 'Enter a valid email',
+                      validator: (value) => value != null && value.contains('@') ? null : 'Enter a valid email',
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
@@ -72,9 +72,9 @@ class LoginPageState extends State<LoginPage> {
                     TextFormField(
                       controller: _passwordController,
                       obscureText: true,
-                      // validator: (value) => value != null && value.length >= 6
-                      //     ? null
-                      //     : 'Password must be at least 6 characters',
+                      validator: (value) => value != null && value.length >= 6
+                          ? null
+                          : 'Password must be at least 6 characters',
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
@@ -107,15 +107,15 @@ class LoginPageState extends State<LoginPage> {
                           String email = _emailController.text.trim();
                           String password = _passwordController.text.trim();
 
-                          // if (email.isEmpty || password.isEmpty) {
-                          //   ScaffoldMessenger.of(context).showSnackBar(
-                          //     SnackBar(content: Text('Email and password cannot be empty')),
-                          //   );
-                          //   return;
-                          // }
-                          //
-                          // UserCredential userCredential = await FirebaseAuth.instance
-                          //     .signInWithEmailAndPassword(email: email, password: password);
+                          if (email.isEmpty || password.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Email and password cannot be empty')),
+                            );
+                            return;
+                          }
+                          print("On LOGING PAGGEDDD SEND BACK!");
+                          UserCredential userCredential = await FirebaseAuth.instance
+                              .signInWithEmailAndPassword(email: email, password: password);
 
                           if (widget.role == 'Company') {
                             Navigator.pushReplacement(

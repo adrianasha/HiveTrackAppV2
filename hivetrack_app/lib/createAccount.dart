@@ -45,25 +45,39 @@ class CreateAccountState extends State<CreateAccount> {
         );
 
         if (widget.role == 'Agent' || widget.role == 'Dropship_Agent') {
+          String Tagged = "";
+          String Value = "";
+          if (widget.role == 'Agent') {
+            Tagged = "id";
+            Value = "AG${generateCustomId(4, false, true)}";
+          } else if (widget.role == 'Dropship_Agent') {
+            Tagged = "id";
+            Value = "DSAG${generateCustomId(4, false, true)}";
+          }
           await FirebaseFirestore.instance.collection(widget.role).doc(userCredential.user!.uid).set({
-            'company_id': _companyIdController.text.trim(), // Use the Company ID entered by the user
+            'company_id': _companyIdController.text.trim(),
+            Tagged: Value,
+            'verified': false,
             'email': _emailController.text.trim(),
             'name': _fullNameController.text.trim(),
             'telephone': _telephoneController.text.trim(),
             'address': _addressController.text.trim(),
             'created_at': FieldValue.serverTimestamp(),
           });
+          await FirebaseAuth.instance.signOut();
+
           _showPopup();
         } else {
           await FirebaseFirestore.instance.collection(widget.role).doc(
               userCredential.user!.uid).set({
-            'company_id': generateCustomId(6, false),
+            'company_id': generateCustomId(6, false, false),
             'email': _emailController.text.trim(),
             'name': _fullNameController.text.trim(),
             'telephone': _telephoneController.text.trim(),
             'address': _addressController.text.trim(),
             'created_at': FieldValue.serverTimestamp(),
           });
+          await FirebaseAuth.instance.signOut();
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -74,15 +88,14 @@ class CreateAccountState extends State<CreateAccount> {
               ),
             ),
           );
-          Navigator.pop(context);
+
+          Timer(const Duration(seconds: 3), () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => LoginPage(role: widget.role)),
+            );
+          });
         }
-
-        await FirebaseAuth.instance.signOut();
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => LoginPage(role: widget.role)),
-        );
       } on FirebaseAuthException catch (e) {
         String errorMessage;
         if (e.code == 'email-already-in-use') {
@@ -136,10 +149,13 @@ class CreateAccountState extends State<CreateAccount> {
       },
     );
 
-    // Close the popup after 3 seconds
+    // Close the popup after 3 seconds and navigate to the login page
     Timer(const Duration(seconds: 3), () {
       Navigator.of(context).pop(); // Close the popup
-      Navigator.pop(context); // Navigate back to the previous page
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage(role: widget.role)),
+      );
     });
   }
 
@@ -275,10 +291,9 @@ class CreateAccountState extends State<CreateAccount> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
+                    padding: const EdgeInsets.only(top: 10.0, bottom: 20.0),
                     child: TextFormField(
                       controller: _addressController,
-                      maxLines: 2,
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
@@ -291,20 +306,14 @@ class CreateAccountState extends State<CreateAccount> {
                       style: const TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'By clicking register, you are agreeing with Terms & Conditions',
-                    style: TextStyle(fontFamily: 'Roboto', fontSize: 12, color: Colors.black),
-                  ),
-                  const SizedBox(height: 30),
                   ElevatedButton(
                     onPressed: _createAccount,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
+                      minimumSize: const Size(200, 50),
+                      backgroundColor: const Color.fromARGB(255, 44, 150, 109),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 50.0),
                     ),
                     child: const Text(
                       'Create Account',

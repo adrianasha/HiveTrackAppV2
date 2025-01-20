@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:hivetrack_app/Agents/ScanIn.dart';
+import 'package:intl/intl.dart';
 import '../NavBar.dart';
+import 'ScanOut.dart';
 
 class AgentDashboard extends StatefulWidget {
   const AgentDashboard({Key? key}) : super(key: key);
@@ -9,6 +12,9 @@ class AgentDashboard extends StatefulWidget {
 }
 
 class _AgentDashboardState extends State<AgentDashboard> {
+
+  String todayDate = DateFormat.yMMMMd().format(DateTime.now());
+
   // Example state variables
   String username = "Cindercella";
   int stockInCount = 0;
@@ -72,13 +78,13 @@ class _AgentDashboardState extends State<AgentDashboard> {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
+                      children: [
                         Text(
                           "Today",
                           style: TextStyle(fontFamily: 'Roboto', fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         Text(
-                          "Nov 18, 2024",
+                          todayDate,
                           style: TextStyle(fontFamily: 'Roboto', fontSize: 16),
                         ),
                       ],
@@ -115,7 +121,14 @@ class _AgentDashboardState extends State<AgentDashboard> {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ScanIn(),
+                        ),
+                      );
+                    },
                     icon: const Icon(Icons.rss_feed, color: Colors.black),
                     label: const Text("Stock In Scan", style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black)),
                     style: ElevatedButton.styleFrom(
@@ -127,7 +140,14 @@ class _AgentDashboardState extends State<AgentDashboard> {
                     ),
                   ),
                   ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ScanOut(),
+                        ),
+                      );
+                    },
                     icon: const Icon(Icons.rss_feed, color: Colors.black),
                     label: const Text("Stock Out Scan", style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black)),
                     style: ElevatedButton.styleFrom(
