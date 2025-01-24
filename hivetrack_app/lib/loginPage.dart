@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-
 import 'Agents/AgentDashboard.dart';
 import 'Company/CompanyDashboard.dart';
 import 'Dropships/DropshipDashboard.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginPage extends StatefulWidget {
-  final String role; // Specify the role: Company, Agent, Dropship Agent
+  final String role;
   final void Function()? onForgotPassword;
   final void Function()? onLogin;
 
@@ -113,7 +112,7 @@ class LoginPageState extends State<LoginPage> {
                             );
                             return;
                           }
-                          print("On LOGING PAGGEDDD SEND BACK!");
+
                           UserCredential userCredential = await FirebaseAuth.instance
                               .signInWithEmailAndPassword(email: email, password: password);
 
@@ -121,19 +120,22 @@ class LoginPageState extends State<LoginPage> {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => const CompanyDashboard()),
+                                  builder: (context) => const CompanyDashboard()
+                              ),
                             );
                           } else if (widget.role == 'Agent') {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => const AgentDashboard()),
+                                  builder: (context) => const AgentDashboard(),
+                              )
                             );
                           } else if (widget.role == 'Dropship_Agent') {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => DropshipDashboard()),
+                                  builder: (context) => DropshipDashboard()
+                              ),
                             );
                           }
                         } on FirebaseAuthException catch (e) {

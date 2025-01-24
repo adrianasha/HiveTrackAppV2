@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hivetrack_app/Agents/ScanIn.dart';
 import 'package:intl/intl.dart';
+import '../EssentialFunctions.dart';
 import '../NavBar.dart';
+import 'AgentsMapDropship.dart';
 import 'ScanOut.dart';
 
 class AgentDashboard extends StatefulWidget {
@@ -12,26 +14,68 @@ class AgentDashboard extends StatefulWidget {
 }
 
 class _AgentDashboardState extends State<AgentDashboard> {
-
+  Map<String, dynamic> userData = {};
   String todayDate = DateFormat.yMMMMd().format(DateTime.now());
-
-  // Example state variables
-  String username = "Cindercella";
-  int stockInCount = 0;
-  int stockOutCount = 0;
-  int taskCount = 0;
-
-  // Example method to update state (you can call this when needed)
-  void updateCounts({int? newStockIn, int? newStockOut, int? newTasks}) {
-    setState(() {
-      if (newStockIn != null) stockInCount = newStockIn;
-      if (newStockOut != null) stockOutCount = newStockOut;
-      if (newTasks != null) taskCount = newTasks;
-    });
-  }
+  String username = "Unknown";
+  int stockInCount = 10;
+  int stockOutCount = 5;
 
   @override
   Widget build(BuildContext context) {
+    return FutureBuilder<String?>(
+      future: getCurrentAuthUserId(), // Access widget.userId here
+      builder: (context, secondSnapshot) {
+        if (secondSnapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        } else if (secondSnapshot.hasError) {
+          return Scaffold(
+            body: Center(child: Text('Error: ${secondSnapshot.error}')),
+          );
+        } else if (!secondSnapshot.hasData) {
+          return const Scaffold(
+            body: Center(child: Text('No verified user data found.')),
+          );
+        } else {
+          final userId = secondSnapshot.data;
+
+          return FutureBuilder<Map<String, dynamic>>(
+            future: getUserDataWithParentName(userId!), // Access widget.userId here
+            builder: (context, secondSnapshot) {
+              if (secondSnapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              } else if (secondSnapshot.hasError) {
+                return Scaffold(
+                  body: Center(child: Text('Error: ${secondSnapshot.error}')),
+                );
+              } else if (!secondSnapshot.hasData) {
+                return const Scaffold(
+                  body: Center(child: Text('No verified user data found.')),
+                );
+              } else {
+                final Data = secondSnapshot.data;
+                userData = Data!["user_data"];
+                username = userData["name"] ?? "Unknown";
+                return buildDashboard(context);
+              }
+            },
+          );
+        }
+      },
+    );
+  }
+
+  void updateCounts({int? newStockIn, int? newStockOut}) {
+    setState(() {
+      if (newStockIn != null) stockInCount = newStockIn;
+      if (newStockOut != null) stockOutCount = newStockOut;
+    });
+  }
+
+  Widget buildDashboard(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
@@ -40,21 +84,23 @@ class _AgentDashboardState extends State<AgentDashboard> {
         automaticallyImplyLeading: false,
         title: Row(
           children: [
-            const CircleAvatar(
-              radius: 30,
-              backgroundColor: Colors.grey, // Placeholder for the profile picture
-            ),
+            // const CircleAvatar(
+            //   radius: 30,
+            //   backgroundColor: Colors.grey, // Placeholder for the profile picture
+            // ),
             const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   "Hello,",
-                  style: TextStyle(fontFamily: 'Roboto', fontSize: 25, color: Colors.black),
+                  style: TextStyle(fontFamily: 'Roboto', fontSize: 25, color: Colors.black,
+                  ),
                 ),
                 Text(
                   username,
-                  style: const TextStyle(fontFamily: 'Roboto', fontSize: 27, fontWeight: FontWeight.bold, color: Colors.black),
+                  style: const TextStyle(fontFamily: 'Roboto', fontSize: 27, fontWeight: FontWeight.bold, color: Colors.black,
+                  ),
                 ),
               ],
             ),
@@ -81,11 +127,13 @@ class _AgentDashboardState extends State<AgentDashboard> {
                       children: [
                         Text(
                           "Today",
-                          style: TextStyle(fontFamily: 'Roboto', fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(fontFamily: 'Roboto', fontSize: 18, fontWeight: FontWeight.bold,
+                          ),
                         ),
                         Text(
                           todayDate,
-                          style: TextStyle(fontFamily: 'Roboto', fontSize: 16),
+                          style: TextStyle(fontFamily: 'Roboto', fontSize: 16,
+                          ),
                         ),
                       ],
                     ),
@@ -95,20 +143,30 @@ class _AgentDashboardState extends State<AgentDashboard> {
                       children: [
                         Column(
                           children: [
-                            Text("$stockInCount", style: const TextStyle(fontFamily: 'Roboto', fontSize: 24, fontWeight: FontWeight.bold)),
-                            const Text("Stock In", style: TextStyle(fontFamily: 'Roboto', fontSize: 16)),
+                            Text(
+                              "$stockInCount",
+                              style: const TextStyle(fontFamily: 'Roboto', fontSize: 24, fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Text(
+                              "Stock In",
+                              style: TextStyle(fontFamily: 'Roboto', fontSize: 16,
+                              ),
+                            ),
                           ],
                         ),
                         Column(
                           children: [
-                            Text("$stockOutCount", style: const TextStyle(fontFamily: 'Roboto', fontSize: 24, fontWeight: FontWeight.bold)),
-                            const Text("Stock Out", style: TextStyle(fontFamily: 'Roboto', fontSize: 16)),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            Text("$taskCount", style: const TextStyle(fontFamily: 'Roboto', fontSize: 24, fontWeight: FontWeight.bold)),
-                            const Text("Task", style: TextStyle(fontFamily: 'Roboto', fontSize: 16)),
+                            Text(
+                              "$stockOutCount",
+                              style: const TextStyle(fontFamily: 'Roboto', fontSize: 24, fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Text(
+                              "Stock Out",
+                              style: TextStyle(fontFamily: 'Roboto', fontSize: 16,
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -130,7 +188,11 @@ class _AgentDashboardState extends State<AgentDashboard> {
                       );
                     },
                     icon: const Icon(Icons.rss_feed, color: Colors.black),
-                    label: const Text("Stock In Scan", style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black)),
+                    label: const Text(
+                      "Stock In Scan",
+                      style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.amber[200],
                       padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
@@ -149,7 +211,11 @@ class _AgentDashboardState extends State<AgentDashboard> {
                       );
                     },
                     icon: const Icon(Icons.rss_feed, color: Colors.black),
-                    label: const Text("Stock Out Scan", style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black)),
+                    label: const Text(
+                      "Stock Out Scan",
+                      style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.amber[200],
                       padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
@@ -161,68 +227,55 @@ class _AgentDashboardState extends State<AgentDashboard> {
                 ],
               ),
               const SizedBox(height: 16),
-              Container(
-                width: 500,
-                height: 150,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: Colors.white,
-                  border: Border.all(color: Colors.black12),
-                ),
-                child: Column(
-                  children: [
-                    Image.asset(
-                      'assets/flyingBeee.png',
-                      height: 50,
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      "Honey Dropship Agents",
-                      style: TextStyle(fontFamily: 'Roboto', fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+              Column(
                 children: [
-                  ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.file_download_outlined, color: Colors.black),
-                    label: const Text("Stock In", style: TextStyle(fontFamily: 'Roboto', fontSize: 20, color: Colors.black)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.black12),
-                      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 120),
-                      shape: RoundedRectangleBorder(
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AgentsMapDropship(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      height: 440,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.amber),
                       ),
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.file_upload_outlined, color: Colors.black),
-                    label: const Text("Stock Out", style: TextStyle(fontFamily: 'Roboto', fontSize: 20, color: Colors.black)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.black12),
-                      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 120),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 100),
+                          Image.asset(
+                            'assets/flyingBeee.png',
+                            height: 100,
+                          ),
+                          const SizedBox(height: 20),
+                          const Text(
+                            "Honey Dropship Agents",
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ],
-              ),
+              )
             ],
           ),
         ),
       ),
       bottomNavigationBar: NavBar(
-        currentIndex: 0, // Set the initial tab index for the agent
-        role: 'Agent', // Pass the role to adapt the NavBar to the agent
+        currentIndex: 0,
+        role: 'Agent',
       ),
     );
   }

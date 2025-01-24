@@ -99,14 +99,14 @@ class CompanyNotifications extends StatelessWidget {
                                         for (var entry in request.entries) {
                                           entry.value["user_id"] = entry.key;
                                           entry.value["role"] = role;
-                                          print(entry.value);
+
                                           rows.add(RequestTile(
                                             name: entry.value['name'] ?? 'Unknown',
                                             subtitle: 'is requesting to be a $role...',
                                             onTap: () {
                                               Navigator.push(
                                                 context,
-                                                MaterialPageRoute(builder: (context) => CompanyAgentRequest(dataMap: entry.value)), // Customize navigation if needed
+                                                MaterialPageRoute(builder: (context) => CompanyAgentRequest(dataMap: entry.value, role: role,)), // Customize navigation if needed
                                               );
                                             },
                                           ));

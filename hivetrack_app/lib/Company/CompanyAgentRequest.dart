@@ -1,11 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../EssentialFunctions.dart';
 import '../NavBar.dart';
 
 class CompanyAgentRequest extends StatelessWidget {
   final Map<String, dynamic> dataMap;
+  final String role;
+  String? selectedAgentId;
 
-  CompanyAgentRequest({super.key, required this.dataMap});
+  CompanyAgentRequest({super.key, required this.dataMap, required this.role});
 
   @override
   Widget build(BuildContext context) {
@@ -47,11 +50,13 @@ class CompanyAgentRequest extends StatelessWidget {
             Center(
               child: Text(
                 'Agent Details',
-                style: TextStyle(fontFamily: 'Roboto', fontSize: 18, color: Colors.black),
+                style: TextStyle(fontFamily: 'Roboto', fontSize: 20, color: Colors.black),
               ),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 20),
             Container(
+              width: 500, // Set the desired width
+              height: 600, // Set the desired height
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey.shade300),
@@ -60,12 +65,64 @@ class CompanyAgentRequest extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   ...agentDetails.map((detail) => InfoRow(
                     label: detail['label']!,
                     value: detail['value']!,
                   )),
-                  SizedBox(height: 300),
+                  if (role == "Dropship_Agent") ...[
+                    SizedBox(height: 16.0),
+                    Text(
+                      'Agent Assigned:',
+                      style: TextStyle(fontFamily: 'Roboto', fontSize: 16.0, fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 8.0),
+                    FutureBuilder<Map<String, dynamic>>(
+                      future: getAllVerifiedUsersByCID(dataMap["company_id"], 0), // Call your async function
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return CircularProgressIndicator(); // Show a loading indicator
+                        } else if (snapshot.hasError) {
+                          return Text('Error: ${snapshot.error}');
+                        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return Text('No items available');
+                        }
+
+                        final verifiedData = snapshot.data!;
+
+                        return DropdownButtonFormField<String>(
+                          decoration: InputDecoration(
+                            filled: null,
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: Colors.amber, width: 1.5), // Amber horizontal line
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: Colors.amber, width: 2.0), // Thicker amber line when focused
+                            ),
+                            hintText: 'Select an option',
+                            hintStyle: TextStyle(fontFamily: 'Roboto', fontSize: 12.0, fontWeight: FontWeight.bold),
+                            contentPadding: EdgeInsets.symmetric(vertical: 5.0), // Adjust spacing around the dropdown
+                          ),
+                          items: [
+                            ...verifiedData.entries.map((entry) {
+                              var agentId = entry.value["id"];
+                              var coveredAgentCount = entry.value["covered_agent"]?.length ?? 0;
+
+                              return DropdownMenuItem(
+                                value: entry.key,
+                                child: Text('$agentId ($coveredAgentCount)',  style: TextStyle(fontFamily: 'Roboto', fontSize: 16.0, fontWeight: FontWeight.normal)
+                                ),
+                              );
+                            })
+                          ],
+                          onChanged: (value) {
+                            selectedAgentId = value;
+                          },
+                        );
+                      },
+                    )
+                  ],
+                  SizedBox(height: 230),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.amber[300],
@@ -75,15 +132,49 @@ class CompanyAgentRequest extends StatelessWidget {
                     ),
                     onPressed: () async {
                       try {
-                        final docRef = FirebaseFirestore.instance
-                            .collection(dataMap["role"])
-                            .doc(dataMap["user_id"]);
-                        await docRef.update({
-                          'verified': true,
-                        });
-                        Navigator.pop(context);
+                        if (role == "Dropship_Agent") {
+                          if (selectedAgentId != null) {
+                            final dropship_docRef = FirebaseFirestore.instance
+                                .collection("Dropship_Agent")
+                                .doc(dataMap["user_id"]);
+                            await dropship_docRef.update({
+                              'verified': true,
+                              'selected_agent':selectedAgentId
+                            });
+
+                            final agent_docRef = FirebaseFirestore.instance
+                                .collection("Agent")
+                                .doc(selectedAgentId);
+
+                            final agentSnapshot = await agent_docRef.get();
+
+                            if (agentSnapshot.exists) {
+                              List<dynamic> coveredAgentList = agentSnapshot.data()?['covered_agent'] ?? [];
+
+                              coveredAgentList.add(dataMap["user_id"]);
+                              await agent_docRef.update({
+                                'covered_agent': coveredAgentList,
+                              });
+                            }
+                            Navigator.pop(context);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Please select an Agent to be assigned to the Dropshipper Agent!', style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.grey))),
+                            );
+                          }
+                        } else {
+                          final docRef = FirebaseFirestore.instance
+                              .collection("Agent")
+                              .doc(dataMap["user_id"]);
+                          await docRef.update({
+                            'verified': true,
+                          });
+                          Navigator.pop(context);
+                        }
                       } catch (e) {
-                        print('Error updating verified field: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error updating verified field: $e', style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.grey))),
+                        );
                       }
                     },
                     child: Center(

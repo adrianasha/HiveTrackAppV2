@@ -6,8 +6,6 @@ import '../NavBar.dart';
 class CompanyAgentManagement extends StatelessWidget {
   final String role;
 
-  CompanyAgentManagement({Key? key, required this.role}) : super(key: key);
-
   // final List<Map<String, String>> agents = [
   //   {
   //     'name': 'Alisya Tomes',
@@ -35,6 +33,7 @@ class CompanyAgentManagement extends StatelessWidget {
   //   },
   // ];
 
+  CompanyAgentManagement({Key? key, required this.role}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +50,7 @@ class CompanyAgentManagement extends StatelessWidget {
           } else {
             final uid = snapshot.data!;
             return FutureBuilder<Map<String, dynamic>>(
-              future: getUserDataWithParentName(uid), // New Future to get additional data
+              future: getUserDataWithParentName(uid),
               builder: (context, secondSnapshot) {
                 if (secondSnapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
@@ -63,16 +62,16 @@ class CompanyAgentManagement extends StatelessWidget {
                   final userData = secondSnapshot.data;
 
                   return FutureBuilder<Map<String, dynamic>>(
-                    future: getAllVerifiedUsersByCID(userData?["user_data"]["company_id"], 0), // New Future to get additional data
-                    builder: (context, secondSnapshot) {
-                      if (secondSnapshot.connectionState == ConnectionState.waiting) {
+                    future: getAllVerifiedUsersByCID(userData?["user_data"]["company_id"], 0),
+                    builder: (context, thirdSnapshot) {
+                      if (thirdSnapshot.connectionState == ConnectionState.waiting) {
                         return Center(child: CircularProgressIndicator());
-                      } else if (secondSnapshot.hasError) {
-                        return Center(child: Text('Error: ${secondSnapshot.error}'));
-                      } else if (!secondSnapshot.hasData) {
+                      } else if (thirdSnapshot.hasError) {
+                        return Center(child: Text('Error: ${thirdSnapshot.error}'));
+                      } else if (!thirdSnapshot.hasData) {
                         return Center(child: Text('No verified user data found.'));
                       } else {
-                        final verifiedUserData = secondSnapshot.data;
+                        final verifiedUserData = thirdSnapshot.data;
 
                         return AgentCard(agents: [
                           for (var entry in verifiedUserData!.values)
@@ -80,7 +79,8 @@ class CompanyAgentManagement extends StatelessWidget {
                               'name': entry['name'] ?? 'No Name',
                               'id': entry['id'] ?? 'No ID',
                               'location': entry['address'] ?? 'No Address',
-                              'joinedDate': DateFormat('yyyy-MM-dd HH:mm:ss').format(entry['created_at'].toDate()) ?? 'No Address',
+                              'joinedDate': DateFormat('yyyy-MM-dd HH:mm:ss').format(entry['created_at'].toDate()) ?? 'No joinDate',
+                              'covered_agent': entry["covered_agent"],
                             }
                         ], role: role);
                       }
@@ -91,15 +91,14 @@ class CompanyAgentManagement extends StatelessWidget {
             );
           }
         },
-      )
+      ),
     );
   }
 }
 
-
 class AgentCard extends StatelessWidget {
   final String role;
-  final List<Map<String, String>> agents;
+  final List<Map<String, dynamic>> agents;
 
   const AgentCard({Key? key, required this.agents, required this.role}) : super(key: key);
 
@@ -117,24 +116,20 @@ class AgentCard extends StatelessWidget {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(15.0, 20.0, 16.0, 16.0),
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Search by name, ID... etc',
-                hintStyle: const TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 16,
-                  color: Colors.grey,
+                hintStyle: const TextStyle(fontFamily: 'Roboto', fontSize: 16, color: Colors.grey,
                 ),
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.filter_alt_outlined),
-                  ],
+                suffixIcon: const Icon(Icons.filter_alt_outlined),
+                border: const UnderlineInputBorder(), // Horizontal line as underline
+                enabledBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey),
                 ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                focusedBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.amber, width: 2),
                 ),
               ),
             ),
@@ -145,10 +140,11 @@ class AgentCard extends StatelessWidget {
               itemBuilder: (context, index) {
                 final agent = agents[index];
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 3.0),
                   child: Card(
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.zero,
+                      side: BorderSide(color: Colors.white38, width: 2.0),
                     ),
                     child: ListTile(
                       leading: CircleAvatar(
@@ -157,11 +153,7 @@ class AgentCard extends StatelessWidget {
                       ),
                       title: Text(
                         agent['name']!,
-                        style: const TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 20,
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
+                        style: const TextStyle(fontFamily: 'Roboto', fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold,
                         ),
                       ),
                       subtitle: Column(
@@ -173,10 +165,7 @@ class AgentCard extends StatelessWidget {
                               const SizedBox(width: 4),
                               Text(
                                 agent['id']!,
-                                style: const TextStyle(
-                                  fontFamily: 'Roboto',
-                                  fontSize: 13,
-                                  color: Colors.black,
+                                style: const TextStyle(fontFamily: 'Roboto', fontSize: 13, color: Colors.black,
                                 ),
                               ),
                             ],
@@ -185,13 +174,30 @@ class AgentCard extends StatelessWidget {
                             children: [
                               const Icon(Icons.location_on, size: 16, color: Colors.black54),
                               const SizedBox(width: 4),
-                              Text(
-                                agent['location']!,
-                                style: const TextStyle(
-                                  fontFamily: 'Roboto',
-                                  fontSize: 13,
-                                  color: Colors.black,
-                                ),
+                              FutureBuilder<Map<String, String>>(
+                                future: getCityAndRegion(agent['location']!),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState == ConnectionState.waiting) {
+                                    return const CircularProgressIndicator(); // Show loading indicator
+                                  } else if (snapshot.hasError) {
+                                    return const Text("Error fetching address");
+                                  } else if (snapshot.hasData) {
+                                    final data = snapshot.data!;
+                                    String? city = data['city'];
+                                    String? region = data['region'];
+                                    return Flexible(
+                                      child: Text(
+                                        "$city, $region",
+                                        style: const TextStyle(fontFamily: 'Roboto', fontSize: 13, color: Colors.black,
+                                        ),
+                                        maxLines: 2, // Limit to 2 lines
+                                        overflow: TextOverflow.ellipsis, // Add ellipsis for overflow
+                                      ),
+                                    );
+                                  } else {
+                                    return const Text("No address found");
+                                  }
+                                },
                               ),
                             ],
                           ),
@@ -214,8 +220,10 @@ class AgentCard extends StatelessWidget {
                       trailing: PopupMenuButton<String>(
                         onSelected: (String value) {
                           if (value == 'dropship') {
-                            // Navigate to Dropship List
-                            print('Navigating to Dropship List');
+                            showDialog(
+                              context: context,
+                              builder: (context) => DropshipListPopup(agent: agent),
+                            );
                           } else if (value == 'delete') {
                             // Handle delete action
                             print('Deleting Agent');
@@ -259,8 +267,342 @@ class AgentCard extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: NavBar(
-        currentIndex: 0, // Set the initial tab index
-        role: role, // Pass the role to the NavBar
+        currentIndex: 0,
+        role: role,
+      ),
+    );
+  }
+}
+
+class DropshipListPopup extends StatelessWidget {
+  final Map<String, dynamic> agent;
+
+  const DropshipListPopup({Key? key, required this.agent}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    String agentID = agent["id"] ?? "Unknown";
+    print("agent fr ");
+    print(agent);
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(16.0),
+        width: 320, // Width of the popup
+        height: 535, // Adjusted height to accommodate buttons
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Dropship Agent List',
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Agent: $agentID',
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 16,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: ListView(
+                children: [
+                  if (agent["covered_agent"] != null && agent["covered_agent"]!.isNotEmpty && agent["covered_agent"]!.length > 0) ...[
+                    ...agent["covered_agent"]!.map((agentId) {
+                      return FutureBuilder<Map<String, dynamic>>(
+                        future: getUserDataWithParentName(agentId), // Call your async function
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return CircularProgressIndicator(); // Show a loading indicator
+                          } else if (snapshot.hasError) {
+                            return Text('Error: ${snapshot.error}');
+                          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                            return Text('No items available');
+                          }
+
+                          final agentData = snapshot.data!["user_data"];
+
+                          return Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100], // Background color
+                              borderRadius: BorderRadius.circular(10.0),
+                              border: Border.all(
+                                color: Colors.grey[300]!,
+                                width: 1.0,
+                              ),
+                            ),
+                            padding: const EdgeInsets.all(12.0),
+                            margin: const EdgeInsets.only(bottom: 8.0), // Spacing between boxes
+                            child: ListTile(
+                              title: Text(
+                                agentData["name"],
+                                style: TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${agentData["id"]}',
+                                    style: TextStyle(
+                                      fontFamily: 'Roboto',
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  Text(
+                                    agentData["address"].length > 30
+                                        ? agentData["address"].substring(0, 30) + '...'
+                                        : agentData["address"],
+                                    style: TextStyle(
+                                      fontFamily: 'Roboto',
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Joined on ${DateFormat('yyyy-MM-dd HH:mm:ss').format(agentData['created_at'].toDate()) ?? 'No joinDate'}',
+                                    style: TextStyle(
+                                      fontFamily: 'Roboto',
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  DeleteButton(
+                                    onDelete: () {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Luna Inara deleted!')),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }).toList()
+                  ] else ...[
+                    // Container(
+                    //   decoration: BoxDecoration(
+                    //     color: Colors.grey[100], // Background color
+                    //     borderRadius: BorderRadius.circular(10.0),
+                    //     border: Border.all(
+                    //       color: Colors.grey[300]!,
+                    //       width: 1.0,
+                    //     ),
+                    //   ),
+                    //   padding: const EdgeInsets.all(12.0),
+                    //   margin: const EdgeInsets.only(bottom: 8.0), // Spacing between boxes
+                    //   child: ListTile(
+                    //     title: const Text(
+                    //       'Luna Inara',
+                    //       style: TextStyle(
+                    //         fontFamily: 'Roboto',
+                    //         fontSize: 15,
+                    //         fontWeight: FontWeight.bold,
+                    //       ),
+                    //     ),
+                    //     subtitle: Column(
+                    //       crossAxisAlignment: CrossAxisAlignment.start,
+                    //       children: [
+                    //         const Text(
+                    //           'DSAG10001\nSerdang, Selangor\nJoined on 9/12/2024',
+                    //           style: TextStyle(
+                    //             fontFamily: 'Roboto',
+                    //             fontSize: 15,
+                    //           ),
+                    //         ),
+                    //         const SizedBox(height: 8),
+                    //         DeleteButton(
+                    //           onDelete: () {
+                    //             ScaffoldMessenger.of(context).showSnackBar(
+                    //               const SnackBar(content: Text('Luna Inara deleted!')),
+                    //             );
+                    //           },
+                    //         ),
+                    //       ],
+                    //     ),
+                    //   ),
+                    // ),
+                    Text(
+                      'binchilling',
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  ],
+                  // FutureBuilder<Map<String, dynamic>>(
+                  //   future: getAllVerifiedUsersByCID(dataMap["company_id"], 0), // Call your async function
+                  //   builder: (context, snapshot) {
+                  //     if (snapshot.connectionState == ConnectionState.waiting) {
+                  //       return CircularProgressIndicator(); // Show a loading indicator
+                  //     } else if (snapshot.hasError) {
+                  //       return Text('Error: ${snapshot.error}');
+                  //     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  //       return Text('No items available');
+                  //     }
+                  //
+                  //     final verifiedData = snapshot.data!;
+                  //
+                  //     return DropdownButtonFormField<String>(
+                  //       decoration: InputDecoration(
+                  //         border: OutlineInputBorder(),
+                  //       ),
+                  //       items: [
+                  //         ...verifiedData.entries.map((entry) {
+                  //           var agentId = entry.value["id"];
+                  //           var coveredAgentCount = entry.value["covered_agent"]?.length ?? 0;
+                  //
+                  //           return DropdownMenuItem(
+                  //             value: entry.key,
+                  //             child: Text('$agentId ($coveredAgentCount)'),
+                  //           );
+                  //         })
+                  //       ],
+                  //       onChanged: (value) {
+                  //         selectedAgentId = value;
+                  //       },
+                  //     );
+                  //   },
+                  // ),
+                  // Container(
+                  //   decoration: BoxDecoration(
+                  //     color: Colors.grey[100], // Background color
+                  //     borderRadius: BorderRadius.circular(10.0),
+                  //     border: Border.all(
+                  //       color: Colors.grey[300]!,
+                  //       width: 1.0,
+                  //     ),
+                  //   ),
+                  //   padding: const EdgeInsets.all(12.0),
+                  //   margin: const EdgeInsets.only(bottom: 8.0), // Spacing between boxes
+                  //   child: ListTile(
+                  //     title: const Text(
+                  //       'Luna Inara',
+                  //       style: TextStyle(
+                  //         fontFamily: 'Roboto',
+                  //         fontSize: 15,
+                  //         fontWeight: FontWeight.bold,
+                  //       ),
+                  //     ),
+                  //     subtitle: Column(
+                  //       crossAxisAlignment: CrossAxisAlignment.start,
+                  //       children: [
+                  //         const Text(
+                  //           'DSAG10001\nSerdang, Selangor\nJoined on 9/12/2024',
+                  //           style: TextStyle(
+                  //             fontFamily: 'Roboto',
+                  //             fontSize: 15,
+                  //           ),
+                  //         ),
+                  //         const SizedBox(height: 8),
+                  //         DeleteButton(
+                  //           onDelete: () {
+                  //             ScaffoldMessenger.of(context).showSnackBar(
+                  //               const SnackBar(content: Text('Luna Inara deleted!')),
+                  //             );
+                  //           },
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
+                  // // Second box
+                  // Container(
+                  //   decoration: BoxDecoration(
+                  //     color: Colors.grey[100], // Background color
+                  //     borderRadius: BorderRadius.circular(8.0),
+                  //     border: Border.all(
+                  //       color: Colors.grey[300]!,
+                  //       width: 1.0,
+                  //     ),
+                  //   ),
+                  //   padding: const EdgeInsets.all(12.0),
+                  //   margin: const EdgeInsets.only(bottom: 5.0), // Spacing between boxes
+                  //   child: ListTile(
+                  //     title: const Text(
+                  //       'Thaqif Sha',
+                  //       style: TextStyle(
+                  //         fontFamily: 'Roboto',
+                  //         fontSize: 15,
+                  //         fontWeight: FontWeight.bold,
+                  //       ),
+                  //     ),
+                  //     subtitle: Column(
+                  //       crossAxisAlignment: CrossAxisAlignment.start,
+                  //       children: [
+                  //         const Text(
+                  //           'DSAG10003\nSerdang, Selangor\nJoined on 10/12/2024',
+                  //           style: TextStyle(
+                  //             fontFamily: 'Roboto',
+                  //             fontSize: 15,
+                  //           ),
+                  //         ),
+                  //         const SizedBox(height: 8),
+                  //         DeleteButton(
+                  //           onDelete: () {
+                  //             ScaffoldMessenger.of(context).showSnackBar(
+                  //               const SnackBar(content: Text('Thaqif Sha deleted!')),
+                  //             );
+                  //           },
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+                child: const Text(
+                  'Close',
+                  style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.amber),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+class DeleteButton extends StatelessWidget {
+  final VoidCallback onDelete;
+
+  const DeleteButton({Key? key, required this.onDelete}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: onDelete,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white30,
+      ),
+      child: const Text(
+        'Delete Agent',
+        style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.white),
       ),
     );
   }

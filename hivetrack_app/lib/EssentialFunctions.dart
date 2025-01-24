@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:geocoding/geocoding.dart';
 
 String generateCustomId(int length, bool includeLowercase, bool numberOnly) {
   const charsWithLowercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -26,13 +27,22 @@ Future<Map<String, dynamic>> getUserDataWithParentName(String uid) async {
     List<String> collections = ['Agent', 'Company', 'Dropship_Agent'];
 
     for (String collection in collections) {
-      DocumentSnapshot snapshot = await firestore.collection(collection).doc(uid).get();
+      try {
+        DocumentSnapshot snapshot = await firestore.collection(collection).doc(uid).get();
 
-      if (snapshot.exists) {
-        return {
-          'parent_name': collection,
-          'user_data': snapshot.data(),
-        };
+        if (snapshot.exists) {
+          return {
+            'parent_name': collection,
+            'user_data': snapshot.data(),
+          };
+        }
+      } on FirebaseException catch (e) {
+        if (e.code == 'permission-denied') {
+          print('Permission denied for collection $collection. Skipping...');
+        } else {
+          print('An unexpected error occurred in collection $collection: ${e.message}');
+        }
+        continue;
       }
     }
 
@@ -40,7 +50,6 @@ Future<Map<String, dynamic>> getUserDataWithParentName(String uid) async {
   } on FirebaseException catch (e) {
     if (e.code == 'permission-denied') {
       print('Permission denied. Ensure Firestore rules are configured correctly.');
-      // Notify the user about the permission issue
     } else {
       print('An unexpected error occurred: ${e.message}');
     }
@@ -92,7 +101,7 @@ Future<Map<String, dynamic>> getAllVerifiedUsersByCID(String companyId, int Mode
   try {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
     String collection = collections[Mode];
-    print(companyId);
+
     Map<String, dynamic> unverifiedUsersMap = {};
     QuerySnapshot querySnapshot = await firestore
         .collection(collection)
@@ -105,7 +114,6 @@ Future<Map<String, dynamic>> getAllVerifiedUsersByCID(String companyId, int Mode
         unverifiedUsersMap[doc.id] = doc.data();
       }
     }
-    print(unverifiedUsersMap);
 
     return unverifiedUsersMap;
   } on FirebaseException catch (e) {
@@ -129,5 +137,34 @@ Future<String?> getCurrentAuthUserId() async {
   } catch (e) {
     print('Error getting current user UID: $e');
     return null;
+  }
+}
+
+Future<Map<String, String>> getCityAndRegion(String address) async {
+  try {
+    List<Location> locations = await locationFromAddress(address);
+    if (locations.isNotEmpty) {
+      Location location = locations.first;
+
+      // Use reverse geocoding to get address components
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        location.latitude,
+        location.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks.first;
+        String city = place.locality ?? '';
+        String region = place.administrativeArea ?? '';
+
+        return {'city': city, 'region': region};
+      } else {
+        throw Exception('No placemarks found for the given coordinates.');
+      }
+    } else {
+      throw Exception('No locations found for the given address.');
+    }
+  } catch (e) {
+    throw Exception('Error retrieving city and region: $e');
   }
 }
