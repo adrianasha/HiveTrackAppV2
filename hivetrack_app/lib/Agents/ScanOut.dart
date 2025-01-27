@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../NavBar.dart';
+import 'AgentStockOutHist.dart';
 
 class ScanOut extends StatefulWidget {
   const ScanOut({Key? key}) : super(key: key);
@@ -11,14 +12,6 @@ class ScanOut extends StatefulWidget {
 class _ScanOutState extends State<ScanOut> {
   // Track button state
   bool isScanning = false;
-
-  // Controllers for the 6-digit code
-  final List<TextEditingController> _controllers =
-  List.generate(6, (index) => TextEditingController());
-
-  String getEnteredCode() {
-    return _controllers.map((controller) => controller.text).join();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +38,7 @@ class _ScanOutState extends State<ScanOut> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const HistoryPage(), // Replace with your HistoryPage widget
+                    builder: (context) => AgentStockOutHistory(), // Replace with your HistoryPage widget
                   ),
                 );
               }
@@ -177,102 +170,9 @@ class _ScanOutState extends State<ScanOut> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  if (!isScanning) {
-                    // Show the 6-digit code dialog
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          backgroundColor: const Color(0xFFFBD46D),
-                          title: const Text(
-                            "Enter the code displayed on the screen",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 23,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const SizedBox(height: 10),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: List.generate(6, (index) {
-                                  return SizedBox(
-                                    width: 40, // Width of each digit box
-                                    child: TextField(
-                                      controller: _controllers[index],
-                                      keyboardType: TextInputType.number,
-                                      textAlign: TextAlign.center,
-                                      maxLength: 1, // Limit to one digit per box
-                                      style: const TextStyle(
-                                        fontFamily: 'Roboto',
-                                        fontSize: 24,
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      decoration: InputDecoration(
-                                        counterText: '', // Hides the counter (0/1)
-                                        border: const UnderlineInputBorder(
-                                          borderSide: BorderSide(color: Colors.white),
-                                        ),
-                                        focusedBorder: const UnderlineInputBorder(
-                                          borderSide:
-                                          BorderSide(color: Colors.white, width: 2),
-                                        ),
-                                      ),
-                                      onChanged: (value) {
-                                        if (value.length == 1 && index < 5) {
-                                          FocusScope.of(context)
-                                              .nextFocus(); // Automatically move to the next box
-                                        } else if (value.isEmpty && index > 0) {
-                                          FocusScope.of(context)
-                                              .previousFocus(); // Move to the previous box if empty
-                                        }
-                                      },
-                                    ),
-                                  );
-                                }),
-                              ),
-                            ],
-                          ),
-                          actions: [
-                            SizedBox(
-                              width: double.infinity, // Stretch the button horizontally
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.amber[50], // Button background color
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15), // Rounded corners
-                                  ),
-                                  padding: const EdgeInsets.symmetric(vertical: 10), // Adjust vertical padding
-                                ),
-                                onPressed: () {
-                                  // Your button action
-                                },
-                                child: const Text(
-                                  "Enter",
-                                  style: TextStyle(
-                                    fontFamily: 'Roboto',
-                                    fontSize: 17,
-                                    color: Colors.black,
-                                  ), // Text color
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  } else {
-                    // Perform the done action
-                    setState(() {
-                      isScanning = false;
-                    });
-                  }
+                  setState(() {
+                    isScanning = !isScanning;
+                  });
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.yellow[700],
@@ -297,23 +197,6 @@ class _ScanOutState extends State<ScanOut> {
       bottomNavigationBar: NavBar(
         currentIndex: 0, // Set the initial tab index for the agent
         role: 'Agent', // Pass the role to adapt the NavBar to the agent
-      ),
-    );
-  }
-}
-
-// Placeholder for HistoryPage
-class HistoryPage extends StatelessWidget {
-  const HistoryPage({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("History"),
-      ),
-      body: const Center(
-        child: Text("This is the History page."),
       ),
     );
   }

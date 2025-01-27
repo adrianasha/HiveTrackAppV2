@@ -48,35 +48,110 @@ class _AgentsMapDropshipState extends State<AgentsMapDropship> {
       body: Stack(
         children: [
           // Delivery Status Footer (rendered first so it gets overlapped)
+          // Add this to the Positioned widget for the Delivery Status Footer
           Positioned(
-            bottom: 180,
+            bottom: 80, // Adjusted for the lower part
             left: 16,
             right: 16,
-            child: Container(
-              height: 80, // Footer height
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFBD46D),
-                borderRadius: BorderRadius.circular(20.0), // Rounded edges
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, -2),
+            child: Column(
+              children: [
+                Container(
+                  height: 80, // Delivery Status footer height
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFBD46D),
+                    borderRadius: BorderRadius.circular(20.0),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Center(
-                child: const Text(
-                  "Delivery Status",
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Delivery Status",
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
+                const SizedBox(height: 8), // Space between containers
+                // Add lower section here
+                Container(
+                  height: 80,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20.0),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.person, size: 28, color: Colors.black),
+                          SizedBox(height: 4),
+                          Text(
+                            'Dropship Agent',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 14,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.local_shipping, size: 28, color: Colors.black),
+                          SizedBox(height: 4),
+                          Text(
+                            'Delivery',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 14,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.store_mall_directory_outlined, size: 28, color: Colors.black),
+                          SizedBox(height: 4),
+                          Text(
+                            'Mall',
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 14,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
           // Map Section with curved borders (overlapping the Delivery Status)

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../NavBar.dart';
+import 'DropshipHistory.dart';
+import 'DropshipScanIn.dart';
 
 class DropshipDashboard extends StatefulWidget {
   const DropshipDashboard({Key? key}) : super(key: key);
@@ -10,18 +13,14 @@ class DropshipDashboard extends StatefulWidget {
 
 class _DropshipDashboardState extends State<DropshipDashboard> {
   String username = "Cindercella";
-  int stockInCount = 0;
-  int stockOutCount = 0;
-
-  void updateCounts({int? newStockIn, int? newStockOut}) {
-    setState(() {
-      if (newStockIn != null) stockInCount = newStockIn;
-      if (newStockOut != null) stockOutCount = newStockOut;
-    });
-  }
+  int stockInCount = 12;
+  int stockOutCount = 5;
+  int availableStock = 12;
 
   @override
   Widget build(BuildContext context) {
+    String formattedDate = DateFormat('MMM d, yyyy').format(DateTime.now());
+
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
@@ -30,10 +29,6 @@ class _DropshipDashboardState extends State<DropshipDashboard> {
         automaticallyImplyLeading: false,
         title: Row(
           children: [
-            const CircleAvatar(
-              radius: 30,
-              backgroundColor: Colors.grey, // Placeholder for the profile picture
-            ),
             const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,11 +39,7 @@ class _DropshipDashboardState extends State<DropshipDashboard> {
                 ),
                 Text(
                   username,
-                  style: const TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 27,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                  style: const TextStyle(fontFamily: 'Roboto', fontSize: 27, fontWeight: FontWeight.bold, color: Colors.black,
                   ),
                 ),
               ],
@@ -63,7 +54,7 @@ class _DropshipDashboardState extends State<DropshipDashboard> {
           child: Column(
             children: [
               Container(
-                width: 500,
+                width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.amber[200],
@@ -73,14 +64,15 @@ class _DropshipDashboardState extends State<DropshipDashboard> {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Text(
+                      children: [
+                        const Text(
                           "Today",
-                          style: TextStyle(fontFamily: 'Roboto', fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontFamily: 'Roboto', fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         Text(
-                          "Nov 18, 2024",
-                          style: TextStyle(fontFamily: 'Roboto', fontSize: 16),
+                          formattedDate,
+                          style: const TextStyle(fontFamily: 'Roboto', fontSize: 16),
                         ),
                       ],
                     ),
@@ -92,10 +84,7 @@ class _DropshipDashboardState extends State<DropshipDashboard> {
                           children: [
                             Text(
                               "$stockInCount",
-                              style: const TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
+                              style: const TextStyle(fontFamily: 'Roboto', fontSize: 24, fontWeight: FontWeight.bold,
                               ),
                             ),
                             const Text(
@@ -108,14 +97,24 @@ class _DropshipDashboardState extends State<DropshipDashboard> {
                           children: [
                             Text(
                               "$stockOutCount",
-                              style: const TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
+                              style: const TextStyle(fontFamily: 'Roboto', fontSize: 24, fontWeight: FontWeight.bold,
                               ),
                             ),
                             const Text(
                               "Stock Out",
+                              style: TextStyle(fontFamily: 'Roboto', fontSize: 16),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            Text(
+                              "$availableStock",
+                              style: const TextStyle(fontFamily: 'Roboto', fontSize: 24, fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Text(
+                              "Available",
                               style: TextStyle(fontFamily: 'Roboto', fontSize: 16),
                             ),
                           ],
@@ -126,78 +125,114 @@ class _DropshipDashboardState extends State<DropshipDashboard> {
                 ),
               ),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.rss_feed, color: Colors.black),
-                    label: const Text(
-                      "Stock In Scan",
-                      style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.amber[50],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Current Activity",
+                      style: TextStyle(
+                          fontFamily: 'Roboto', fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.amber[200],
-                      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      "Ordered Amount : 6 jars",
+                      style: TextStyle(fontFamily: 'Roboto', fontSize: 15),
                     ),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.rss_feed, color: Colors.black),
-                    label: const Text(
-                      "Stock Out Scan",
-                      style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black),
+                    const SizedBox(height: 2),
+                    const Text(
+                      "Status : Preparing Shipping...",
+                      style: TextStyle(fontFamily: 'Roboto', fontSize: 15),
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.amber[200],
-                      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                    const SizedBox(height: 18),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          children: const [
+                            Icon(Icons.person, size: 40, color: Colors.black),
+                            SizedBox(height: 4),
+                            Text("AG1029", style: TextStyle(fontFamily: 'Roboto', fontSize: 14)),
+                          ],
+                        ),
+                        Column(
+                          children: const [
+                            Icon(Icons.local_shipping, size: 40, color: Colors.black),
+                            SizedBox(height: 4),
+                            Text("Out for delivery", style: TextStyle(fontFamily: 'Roboto', fontSize: 14)),
+                          ],
+                        ),
+                        Column(
+                          children: const [
+                            Icon(Icons.person_outline_outlined, size: 40, color: Colors.black),
+                            SizedBox(height: 4),
+                            Text("You", style: TextStyle(fontFamily: 'Roboto', fontSize: 14)),
+                          ],
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.file_download_outlined, color: Colors.black),
-                    label: const Text(
-                      "Stock In",
-                      style: TextStyle(fontFamily: 'Roboto', fontSize: 20, color: Colors.black),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.black12),
-                      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 120),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => DropshipScanIn()),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  height: 140,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.amber[50],
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.file_upload_outlined, color: Colors.black),
-                    label: const Text(
-                      "Stock Out",
-                      style: TextStyle(fontFamily: 'Roboto', fontSize: 20, color: Colors.black),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.black12),
-                      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 120),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      const Icon(Icons.qr_code_scanner, size: 40, color: Colors.black),
+                      const SizedBox(height: 8),
+                      const Text("Scan Inventory",
+                          style: TextStyle(fontFamily: 'Roboto', fontSize: 16)),
+                    ],
                   ),
-                ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => DropshipHistory()),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  height: 140,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.amber[50],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      const Icon(Icons.inventory_2_outlined, size: 40, color: Colors.black),
+                      const SizedBox(height: 8),
+                      const Text("Stock History",
+                          style: TextStyle(fontFamily: 'Roboto', fontSize: 16)),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
