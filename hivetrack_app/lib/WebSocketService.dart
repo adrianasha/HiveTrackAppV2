@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:hivetrack_app/EssentialFunctions.dart';
 
 class WebSocketService {
@@ -11,10 +10,11 @@ class WebSocketService {
 
   WebSocket? _webSocket;
   String? _url;
-  bool _isConnected = false;
+  String? _uid;
   final Map<String, Completer<dynamic>> _pendingRequests = {};
-  final Duration _reconnectDelay = Duration(minutes: 1);
+  final Duration _reconnectDelay = Duration(seconds: 20);
   bool _isReconnecting = false;
+  int registerTried = 0;
 
   Future<void> connect(String url) async {
     _url = url;
@@ -23,19 +23,63 @@ class WebSocketService {
       _webSocket = await WebSocket.connect(url);
       print('Connected to WebSocket at $url');
       _isReconnecting = false;
+      _uid = await getCurrentAuthUserId();
 
       _webSocket?.listen((message) {
+        if (message == 'ping') {
+          _webSocket?.add('pong');
+          print('Sent: pong');
+        }
         print('Received: $message');
-        _handleMessage(message);
-      }, onError: (error) {
-        print('WebSocket error: $error');
-        _reconnect();
-      }, onDone: () {
-        print('WebSocket connection closed.');
-        _reconnect();
-      });
+          try {
+            _handleMessage(message);
+          } catch (e) {
+            print('Error processing message: $e');
+          }
+        },
+        onError: (error) {
+          print('WebSocket error: $error');
+          _reconnect();
+        },
+        onDone: () {
+          print('WebSocket connection closed.');
+          _reconnect();
+        },
+      );
+      await setUID(_uid!);
     } catch (e) {
       print('Failed to connect: $e');
+      _reconnect();
+    }
+  }
+
+  Future<void> setUID(String uid) async {
+    _uid = uid;
+
+    try {
+      print('Set current websocket Uid: $uid');
+      dynamic RegistrationResponse = await sendMessageAndWaitForResponse({
+        'type': 'register',
+        'clientType': 'User',
+        'uid':_uid
+      });
+      registerTried = registerTried + 1;
+
+      dynamic success = RegistrationResponse["success"];
+      if (success) {
+        print("Finished Register");
+      } else {
+        if (registerTried <= 3) {
+          setUID(_uid!);
+        } else if (registerTried > 3 && registerTried <= 6) {
+          _uid = await getCurrentAuthUserId();
+          setUID(_uid!);
+        } else if (registerTried >= 6) {
+          registerTried = 0;
+        }
+      }
+    } catch (e) {
+      print('Failed to register: $e');
       _reconnect();
     }
   }
@@ -55,96 +99,26 @@ class WebSocketService {
     });
   }
 
-  // Future<void> connect(String url) async {
-  //   _url = url;
-  //   while (!_isConnected) {
-  //     try {
-  //       print('Attempting to connect to WebSocket...');
-  //       _webSocket = await WebSocket.connect(url);
-  //       print('Connected to WebSocket: $url');
-  //
-  //       await _sendRegistrationMessage();
-  //
-  //       _webSocket!.listen(
-  //         null,
-  //         onDone: _handleDisconnection,
-  //         onError: (error) {
-  //           print('WebSocket error: $error');
-  //           _handleDisconnection();
-  //         },
-  //       );
-  //
-  //       _isConnected = true;
-  //     } catch (e) {
-  //       print('Failed to connect: $e');
-  //       _scheduleReconnect();
-  //     }
-  //   }
-  // }
+  bool isConnected() {
+    if (_webSocket != null && _webSocket!.readyState == WebSocket.open) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   void _handleMessage(dynamic message) {
     final response = jsonDecode(message);
     final String? responseId = response["responseId"];
 
     if (responseId != null && _pendingRequests.containsKey(responseId)) {
+      print("Pending Request Response :");
+      print(message);
       _pendingRequests[responseId]!.complete(response);
       _pendingRequests.remove(responseId);
     }
   }
 
-  Future<void> _sendRegistrationMessage() async {
-    final Completer<void> completer = Completer<void>();
-
-    String requestID = generateCustomId(13, true, false);
-    final registrationMessage = jsonEncode({
-      'requestId': requestID,
-      'request': {
-        'type': 'register',
-        'clientType': 'User',
-      },
-    });
-
-    _webSocket!.add(registrationMessage);
-
-    dynamic subscription;
-    subscription = _webSocket!.listen((message) {
-      final response = jsonDecode(message);
-      if (response["responseId"] && response["responseId"] == requestID) {
-        if (response['success'] == true) {
-          completer.complete();
-        } else {
-          completer.completeError('Registration failed: $response');
-        }
-
-        subscription.cancel();
-      }
-    });
-
-    return completer.future;
-  }
-
-
-  // Future<dynamic> sendMessageAndWaitForResponse(dynamic message) async {
-  //   final Completer<dynamic> completer = Completer<dynamic>();
-  //
-  //   String requestID = generateCustomId(13, true, false);
-  //   final registrationMessage = jsonEncode({
-  //     'requestId': requestID,
-  //     'request': message,
-  //   });
-  //
-  //   _webSocket!.add(registrationMessage);
-  //
-  //   dynamic subscription;
-  //   subscription = _webSocket!.listen((message) {
-  //     final response = jsonDecode(message);
-  //     if (response["responseId"] && response["responseId"] == requestID) {
-  //       completer.complete(response["response"]);
-  //       subscription.cancel();
-  //     }
-  //   });
-  //
-  //   return completer.future;
-  // }
   Future<dynamic> sendMessageAndWaitForResponse(dynamic message) async {
     final Completer<dynamic> completer = Completer<dynamic>();
     final String requestID = generateCustomId(13, true, false);
@@ -163,24 +137,6 @@ class WebSocketService {
     return completer.future;
   }
 
-  void _handleDisconnection() {
-    print('WebSocket disconnected.');
-    _isConnected = false;
-    _scheduleReconnect();
-  }
-
-  void _scheduleReconnect() {
-    if (_isConnected) return;
-    print('Reconnecting in ${_reconnectDelay.inSeconds} seconds...');
-    Future.delayed(_reconnectDelay, () {
-      if (_url != null) {
-        connect(_url!);
-      } else {
-        print('No URL available for reconnection.');
-      }
-    });
-  }
-
   void sendMessage(String message) {
     if (_webSocket != null && _webSocket!.readyState == WebSocket.open) {
       _webSocket!.add(message);
@@ -191,7 +147,6 @@ class WebSocketService {
   }
 
   void close() {
-    _isConnected = false;
     _webSocket?.close();
     _webSocket = null;
   }

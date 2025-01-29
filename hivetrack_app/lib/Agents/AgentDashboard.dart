@@ -17,11 +17,15 @@ class AgentDashboard extends StatefulWidget {
 
 class _AgentDashboardState extends State<AgentDashboard> {
   Map<String, dynamic> userData = {};
+  final WebSocketService _webSocketService = WebSocketService();
   String todayDate = DateFormat.yMMMMd().format(DateTime.now());
   String username = "Unknown";
   int stockInCount = 10;
   int stockOutCount = 5;
+  int stockAvailable = 5;
   String ScannerCode = "";
+  final ValueNotifier<bool> scannerConnected = ValueNotifier<bool>(false);
+
 
   @override
   Widget build(BuildContext context) {
@@ -64,6 +68,13 @@ class _AgentDashboardState extends State<AgentDashboard> {
                 userData["uid"] = userId;
                 username = userData["name"] ?? "Unknown";
 
+                final inventoryData = userData["Inventory"];
+                if (inventoryData != null) {
+                  if (inventoryData["StockInBox"] != null) stockInCount = inventoryData["StockInBox"];
+                  if (inventoryData["StockOutBox"] != null) stockOutCount = inventoryData["StockOutBox"];
+                  if (inventoryData["Available"] != null) stockAvailable = inventoryData["Available"];
+                }
+
                 final userDocRef = FirebaseFirestore.instance.collection('Agent').doc(userId);
                 userDocRef.update({"Inventory.Mode": "None"}).catchError((error) {
                   debugPrint("Failed to update Mode: $error");
@@ -78,11 +89,19 @@ class _AgentDashboardState extends State<AgentDashboard> {
     );
   }
 
-  void updateCounts({int? newStockIn, int? newStockOut}) {
+  void updateCounts({int? newStockIn, int? newStockOut, int? newStockAvailable}) {
     setState(() {
       if (newStockIn != null) stockInCount = newStockIn;
       if (newStockOut != null) stockOutCount = newStockOut;
+      if (newStockAvailable != null) stockAvailable = newStockAvailable;
     });
+  }
+  void updateisValid(bool valid) {
+    scannerConnected.value = valid;
+  }
+  void updateScannerCode(String code) {
+    ScannerCode = code;
+    print('ScannerCode updated: $ScannerCode');
   }
 
   Widget buildDashboard(BuildContext context) {
@@ -184,7 +203,7 @@ class _AgentDashboardState extends State<AgentDashboard> {
                         Column(
                           children: [
                             Text(
-                              "60",
+                              "$stockAvailable",
                               style: const TextStyle(
                                 fontFamily: 'Roboto', fontSize: 24, fontWeight: FontWeight.bold,
                               ),
@@ -211,18 +230,31 @@ class _AgentDashboardState extends State<AgentDashboard> {
                       width: 120, // Fixed width for all buttons
                       child: ElevatedButton.icon(
                         onPressed: () async {
-                          final WebSocketService _webSocketService = WebSocketService();
-                          dynamic AwaitedData = await _webSocketService.sendMessageAndWaitForResponse({
-                            "type": "isConnectionCodeValid",
-                            "code": "supply ness Ages Bingus"
+                          dynamic awaitedData = await _webSocketService.sendMessageAndWaitForResponse({
+                            "type": "isCodeValid",
+                            "code": ScannerCode
                           });
 
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ScanIn(),
-                            ),
-                          );
+                          bool success = awaitedData["isCodeValid"] != null ? true : false;
+                          if (success || true) {
+                            await _webSocketService.sendMessageAndWaitForResponse({
+                              "type": "userChangedStockMode",
+                              "mode": "In"
+                            });
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ScanIn(),
+                              ),
+                            );
+                          } else {
+                            // showConnectScannerDialog(
+                            //   context: context,
+                            //   webSocketService: _webSocketService,
+                            //   updateScannerCode: updateScannerCode,
+                            //   warning: true
+                            // );
+                          }
                         },
                         icon: const Icon(Icons.arrow_upward_outlined, color: Colors.black),
                         label: const Text(
@@ -246,13 +278,32 @@ class _AgentDashboardState extends State<AgentDashboard> {
                     child: SizedBox(
                       width: 120, // Fixed width for all buttons
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ScanOut(),
-                            ),
-                          );
+                        onPressed: () async {
+                          dynamic awaitedData = await _webSocketService.sendMessageAndWaitForResponse({
+                            "type": "isCodeValid",
+                            "code": ScannerCode
+                          });
+
+                          bool success = awaitedData["isCodeValid"] != null ? true : false;
+                          if (success || true) {
+                            await _webSocketService.sendMessageAndWaitForResponse({
+                              "type": "userChangedStockMode",
+                              "mode": "Out"
+                            });
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ScanOut(),
+                              ),
+                            );
+                          } else {
+                            // showConnectScannerDialog(
+                            //     context: context,
+                            //     webSocketService: _webSocketService,
+                            //     updateScannerCode: updateScannerCode,
+                            //     warning: true
+                            // );
+                          }
                         },
                         icon: const Icon(Icons.arrow_downward, color: Colors.black),
                         label: const Text(
@@ -277,164 +328,13 @@ class _AgentDashboardState extends State<AgentDashboard> {
                       width: 120, // Fixed width for all buttons
                       child: ElevatedButton(
                         onPressed: () {
-                          // Use a context higher in the widget tree
-                          final parentContext = context;
-
-                          showDialog(
-                            context: parentContext,
-                            builder: (BuildContext context) {
-                              List<TextEditingController> _controllers = List.generate(
-                                6,
-                                    (index) => TextEditingController(), // Initialize empty controllers
-                              );
-                              String? errorMessage;
-
-                              return StatefulBuilder(
-                                builder: (BuildContext context, StateSetter setState) {
-                                  return AlertDialog(
-                                    backgroundColor: const Color(0xFFFBD46D),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                    ),
-                                    contentPadding: EdgeInsets.all(0),
-                                    titlePadding: EdgeInsets.all(0),
-                                    content: SizedBox(
-                                      width: 330,
-                                      height: 180, // Increased height to accommodate error message
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const SizedBox(height: 10),
-                                          Text(
-                                            'To connect scanner',
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(
-                                              fontFamily: 'Roboto',
-                                              fontSize: 20,
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 10),
-                                          const Text(
-                                            "Enter the code displayed on the screen",
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontFamily: 'Roboto',
-                                              fontSize: 17,
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 10),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: List.generate(6, (index) {
-                                              return Padding(
-                                                padding: const EdgeInsets.symmetric(horizontal: 7),
-                                                child: SizedBox(
-                                                  width: 40,
-                                                  child: TextField(
-                                                    controller: _controllers[index],
-                                                    keyboardType: TextInputType.number,
-                                                    textAlign: TextAlign.center,
-                                                    maxLength: 1,
-                                                    style: const TextStyle(
-                                                      fontFamily: 'Roboto',
-                                                      fontSize: 24,
-                                                      color: Colors.black,
-                                                      fontWeight: FontWeight.bold,
-                                                    ),
-                                                    decoration: InputDecoration(
-                                                      counterText: '',
-                                                      border: const UnderlineInputBorder(
-                                                        borderSide: BorderSide(color: Colors.white),
-                                                      ),
-                                                      focusedBorder: const UnderlineInputBorder(
-                                                        borderSide: BorderSide(color: Colors.white, width: 2),
-                                                      ),
-                                                    ),
-                                                    onChanged: (value) async {
-                                                      if (value.length == 1 && index < 5) {
-                                                        FocusScope.of(context).nextFocus();
-                                                      } else if (value.isEmpty && index > 0) {
-                                                        FocusScope.of(context).previousFocus();
-                                                      }
-
-                                                      // Check code dynamically
-                                                      String enteredCode = _controllers
-                                                          .map((controller) => controller.text)
-                                                          .join();
-                                                      if (enteredCode.length == 6) {
-                                                        final WebSocketService _webSocketService = WebSocketService();
-                                                        dynamic AwaitedData = await _webSocketService.sendMessageAndWaitForResponse({
-                                                          "type": "connectUserToScanner",
-                                                          "code": enteredCode,
-                                                          "uid": userData["uid"]
-                                                        });
-                                                        if (AwaitedData && AwaitedData["isCodeValid"]) {
-                                                          Navigator.pop(context); // Close the AlertDialog
-                                                          Future.delayed(
-                                                            const Duration(milliseconds: 200),
-                                                                () {
-                                                              showDialog(
-                                                                context: parentContext, // Use parentContext
-                                                                builder: (BuildContext context) {
-                                                                  return Dialog(
-                                                                    backgroundColor: Colors.amber[100],
-                                                                    shape: RoundedRectangleBorder(
-                                                                      borderRadius: BorderRadius.circular(15),
-                                                                    ),
-                                                                    child: Container(
-                                                                      padding: const EdgeInsets.all(20),
-                                                                      child: const Text(
-                                                                        'Scanner connected successfully!',
-                                                                        textAlign: TextAlign.center,
-                                                                        style: TextStyle(
-                                                                          fontFamily: 'Roboto',
-                                                                          fontSize: 20,
-                                                                          fontWeight: FontWeight.bold,
-                                                                          color: Colors.brown,
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  );
-                                                                },
-                                                              );
-                                                            },
-                                                          );
-                                                        } else {
-                                                          setState(() {
-                                                            errorMessage = 'Wrong code entered';
-                                                          });
-                                                        }
-                                                      }
-                                                    },
-                                                  ),
-                                                ),
-                                              );
-                                            }),
-                                          ),
-                                          if (errorMessage != null) // Display error message if exists
-                                            Padding(
-                                              padding: const EdgeInsets.only(top: 10),
-                                              child: Text(
-                                                errorMessage!,
-                                                style: const TextStyle(
-                                                  color: Colors.red,
-                                                  fontFamily: 'Roboto',
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
+                          showConnectScannerDialog(
+                            context: context,
+                            webSocketService: _webSocketService,
+                            updateScannerCode: updateScannerCode,
+                            updateIsValid: updateisValid,
+                            warning: false,
+                            scannerCode: ScannerCode
                           );
                         },
                         style: ElevatedButton.styleFrom(
@@ -446,8 +346,16 @@ class _AgentDashboardState extends State<AgentDashboard> {
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(Icons.wifi_outlined, color: Colors.black),
+                          children: [
+                            ValueListenableBuilder<bool>(
+                              valueListenable: scannerConnected, // Listen to changes in the ValueNotifier
+                              builder: (context, isConnected, child) {
+                                return Icon(
+                                  isConnected ? Icons.wifi_outlined : Icons.wifi_off_sharp, // Conditional icon
+                                  color: isConnected ? Colors.green : Colors.grey[700], // Conditional color
+                                );
+                              },
+                            ),
                             SizedBox(width: 8),
                             Text(
                               'Scanner',
@@ -517,4 +425,184 @@ class _AgentDashboardState extends State<AgentDashboard> {
       ),
     );
   }
+}
+
+Future<void> showConnectScannerDialog({
+  required BuildContext context,
+  required WebSocketService webSocketService,
+  required Function(String) updateScannerCode,
+  required Function(bool) updateIsValid,
+  required bool warning,
+  required scannerCode
+}) async {
+  BuildContext parentContext = context;
+  String? errorMessage;
+
+  await showDialog(
+    context: parentContext,
+    builder: (BuildContext context) {
+      List<TextEditingController> _controllers = List.generate(
+        6,
+            (index) => TextEditingController(), // Initialize empty controllers
+      );
+
+      return StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) {
+          return AlertDialog(
+            backgroundColor: const Color(0xFFFBD46D),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            contentPadding: EdgeInsets.all(0),
+            titlePadding: EdgeInsets.all(0),
+            content: SizedBox(
+              width: 330,
+              height: 180, // Increased height to accommodate error message
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (warning) // Display warning if the scanner is not connected
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Text(
+                        'Please connect your scanner first',
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontFamily: 'Roboto',
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'To connect scanner',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 20,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    "Enter the code displayed on the screen",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 17,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: List.generate(6, (index) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 7),
+                        child: SizedBox(
+                          width: 40,
+                          child: TextField(
+                            controller: _controllers[index],
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            maxLength: 1,
+                            style: const TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 24,
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            decoration: const InputDecoration(
+                              counterText: '',
+                              border: UnderlineInputBorder(
+                                borderSide: BorderSide(color: Colors.white),
+                              ),
+                              focusedBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(color: Colors.white, width: 2),
+                              ),
+                            ),
+                            onChanged: (value) async {
+                              if (value.length == 1 && index < 5) {
+                                FocusScope.of(context).nextFocus();
+                              } else if (value.isEmpty && index > 0) {
+                                FocusScope.of(context).previousFocus();
+                              }
+
+                              // Check code dynamically
+                              String enteredCode = _controllers
+                                  .map((controller) => controller.text)
+                                  .join();
+                              if (enteredCode.length == 6) {
+                                dynamic awaitedData = await webSocketService.sendMessageAndWaitForResponse({
+                                  "type": "connectUserToScanner",
+                                  "code": enteredCode
+                                });
+                                updateScannerCode(enteredCode);
+
+                                bool success = awaitedData["success"];
+                                if (success) {
+                                  print("Awaited Connection Request Success!");
+                                  Navigator.pop(context); // Close the AlertDialog
+                                  Future.delayed(
+                                    const Duration(milliseconds: 200),
+                                        () {
+                                      showDialog(
+                                        context: parentContext, // Use parentContext
+                                        builder: (BuildContext context) {
+                                          updateIsValid(success);
+                                          return Dialog(
+                                            backgroundColor: Colors.amber[100],
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(15),
+                                            ),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(20),
+                                              child: const Text(
+                                                'Scanner connected successfully!',
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                  fontFamily: 'Roboto',
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.brown,
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  );
+                                }
+                              }
+                            },
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                  if (errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Text(
+                        errorMessage!,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontFamily: 'Roboto',
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
 }

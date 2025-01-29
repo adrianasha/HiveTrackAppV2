@@ -1,5 +1,11 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../EssentialFunctions.dart';
 import '../NavBar.dart';
+import '../WebSocketService.dart';
+import 'AgentDashboard.dart';
 import 'AgentStockOutHist.dart';
 
 class ScanOut extends StatefulWidget {
@@ -10,8 +16,8 @@ class ScanOut extends StatefulWidget {
 }
 
 class _ScanOutState extends State<ScanOut> {
-  // Track button state
   bool isScanning = false;
+  String? selectedAgent;
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +44,7 @@ class _ScanOutState extends State<ScanOut> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AgentStockOutHistory(), // Replace with your HistoryPage widget
+                    builder: (context) => AgentStockOutHistory(),
                   ),
                 );
               }
@@ -72,96 +78,158 @@ class _ScanOutState extends State<ScanOut> {
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Text(
-                      "- 1 box",
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 16,
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                    Text(
-                      "- 1 box",
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 16,
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  children: [
+                    AnimatedOpacity(
+                      duration: Duration(milliseconds: 300),
+                      opacity: 0.0,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Text(
+                            "- 1 box",
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 16,
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(width: 10),
+                          Text(
+                            "- 1 box",
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 16,
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      )
                     ),
                   ],
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  "Scanning box...",
+                // const Text(
+                //   "Scanning box...",
+                //   style: TextStyle(
+                //     fontFamily: 'Roboto',
+                //     fontSize: 16,
+                //     color: Colors.black54,
+                //   ),
+                // ),
+                // const SizedBox(height: 10),
+                // LinearProgressIndicator(
+                //   value: 0.7, // Adjust the value dynamically if needed
+                //   color: Colors.yellow[700],
+                //   backgroundColor: Colors.yellow[200],
+                // ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 10),
+          // Text asking user to choose dropship agent
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  "Please choose dropship agent",
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 16,
-                    color: Colors.black54,
+                    color: Colors.black,
                   ),
-                ),
-                const SizedBox(height: 10),
-                LinearProgressIndicator(
-                  value: 0.7, // Adjust the value dynamically if needed
-                  color: Colors.yellow[700],
-                  backgroundColor: Colors.yellow[200],
                 ),
               ],
             ),
           ),
 
-          const SizedBox(height: 30),
+          const SizedBox(height: 10),
+          // Dropdown for choosing dropship agent
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: FutureBuilder<String?>(
+              future: getCurrentAuthUserId(), // Call the getRequester function here
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator()); // Show loading while data is being fetched
+                }
 
-          // Summary Section
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.only(left: 40, right: 20),
-              alignment: Alignment.centerLeft,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    "Summary",
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    "Total box scanned: 2 Boxes",
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 16,
-                      color: Colors.black54,
-                    ),
-                  ),
-                  SizedBox(height: 5),
-                  Text(
-                    "Total items: 12 Jars",
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 16,
-                      color: Colors.black54,
-                    ),
-                  ),
-                  SizedBox(height: 5),
-                  Text(
-                    "To: AG1004",
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 16,
-                      color: Colors.black54,
-                    ),
-                  ),
-                ],
-              ),
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}')); // Handle errors
+                }
+
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No requests found')); // Handle empty data
+                }
+
+                final uid = snapshot.data!;
+                return FutureBuilder<Map<String, dynamic>>(
+                  future: getUserDataWithParentName(uid), // Call the getRequester function here
+                  builder: (context, secondSnapshot) {
+                    if (secondSnapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator()); // Show loading while data is being fetched
+                    }
+
+                    if (secondSnapshot.hasError) {
+                      return Center(child: Text('Error: ${secondSnapshot.error}')); // Handle errors
+                    }
+
+                    if (!secondSnapshot.hasData || secondSnapshot.data!.isEmpty) {
+                      return const Center(child: Text('No requests found')); // Handle empty data
+                    }
+
+                    final userData = secondSnapshot.data;
+                    return FutureBuilder<Map<String, dynamic>>(
+                      future: getAllVerifiedUsersByCID(userData?["user_data"]["company_id"], 1), // Call the getRequester function here
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator()); // Show loading while data is being fetched
+                        }
+
+                        if (snapshot.hasError) {
+                          return Center(child: Text('Error: ${snapshot.error}')); // Handle errors
+                        }
+
+                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return const Center(child: Text('No requests found')); // Handle empty data
+                        }
+
+                        final verifiedUserData = snapshot.data;
+                        return DropdownButtonFormField<String>(
+                          value: selectedAgent,
+                          hint: const Text(
+                            'Select Agent',
+                            style: TextStyle(fontFamily: 'Roboto', fontSize: 16),
+                          ),
+                          onChanged: (newValue) {
+                            setState(() {
+                              selectedAgent = newValue;
+                            });
+                          },
+                          items: verifiedUserData!.entries.where((entry) {
+                            return userData?["user_data"]["covered_agent"] != null && userData?["user_data"]["covered_agent"].contains(entry.key);
+                          }).map((entry) {
+                            final agentName = entry.value['name'] ?? "Uknown";
+                            final agentId = entry.value['id'] ?? "Uknown";
+                            return DropdownMenuItem<String>(
+                              value: entry.key,
+                              child: Text("$agentName | $agentId", style: const TextStyle(fontFamily: 'Roboto')),
+                            );
+                          }).toList(),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
             ),
           ),
+
+          const SizedBox(height: 30),
 
           // Start Scanning / Done Button Section
           Padding(
@@ -169,10 +237,40 @@ class _ScanOutState extends State<ScanOut> {
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    isScanning = !isScanning;
-                  });
+                onPressed: () async {
+                  if (selectedAgent != null) {
+                    final dropship_docRef = FirebaseFirestore.instance
+                        .collection("Dropship_Agent")
+                        .doc(selectedAgent);
+
+                    final userId = await getCurrentAuthUserId();
+                    final agent_docRef = FirebaseFirestore.instance
+                        .collection("Agent")
+                        .doc(userId);
+
+                    final agentSnapshot = await agent_docRef.get();
+
+                    if (agentSnapshot.exists) {
+                      final fullAgentData = agentSnapshot.data();
+                      dynamic agentData = fullAgentData?['Inventory'];
+                      int jars = agentData["StockOutBox"] ?? 0;
+
+                      await dropship_docRef.update({
+                        'Inventory.AwaitedJars': FieldValue.increment(jars * 6)
+                      });
+                      await agent_docRef.update({
+                        'Inventory.StockOutBox': 0,
+                      });
+
+                      final dropshipData = (await dropship_docRef.get()).data();
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return SummaryDialog(tagId: dropshipData?["id"], totalBoxes: jars);
+                        },
+                      );
+                    }
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.yellow[700],
@@ -181,9 +279,9 @@ class _ScanOutState extends State<ScanOut> {
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 15),
                 ),
-                child: Text(
-                  isScanning ? "Done" : "Start Scanning",
-                  style: const TextStyle(
+                child: const Text(
+                  "Done",
+                  style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 18,
                     color: Colors.black,
@@ -198,6 +296,79 @@ class _ScanOutState extends State<ScanOut> {
         currentIndex: 0, // Set the initial tab index for the agent
         role: 'Agent', // Pass the role to adapt the NavBar to the agent
       ),
+    );
+  }
+}
+
+class SummaryDialog extends StatelessWidget {
+  final String tagId;
+  final int totalBoxes;
+  SummaryDialog({Key? key, required this.tagId, required this.totalBoxes}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    int jars = totalBoxes * 6;
+    return AlertDialog(
+      title: const Text(
+        'Summary',
+        style: TextStyle(
+          fontFamily: 'Roboto',
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Total box scanned: $totalBoxes Boxes",
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 16,
+              color: Colors.black54,
+            ),
+          ),
+          SizedBox(height: 5),
+          Text(
+            "Total items: $jars Jars",
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 16,
+              color: Colors.black54,
+            ),
+          ),
+          SizedBox(height: 5),
+          Text(
+            "To: $tagId",
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 16,
+              color: Colors.black54,
+            ),
+          ),
+        ],
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AgentDashboard(),
+              ),
+            );
+          },
+          child: const Text(
+            'Close',
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 16,
+              color: Colors.black54,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

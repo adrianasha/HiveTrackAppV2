@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../NavBar.dart';
+import 'AgentDashboard.dart';
 import 'AgentStockInHist.dart';
 
 class ScanIn extends StatefulWidget {
@@ -10,9 +11,6 @@ class ScanIn extends StatefulWidget {
 }
 
 class _ScanInState extends State<ScanIn> {
-  // Track button state
-  bool isScanning = false;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -22,8 +20,7 @@ class _ScanInState extends State<ScanIn> {
         automaticallyImplyLeading: true,
         title: const Text(
           "Stock In Scanning",
-          style: TextStyle(fontFamily: 'Roboto', fontSize: 25, color: Colors.black,
-          ),
+          style: TextStyle(fontFamily: 'Roboto', fontSize: 25, color: Colors.black),
         ),
         centerTitle: false,
         actions: [
@@ -110,62 +107,20 @@ class _ScanInState extends State<ScanIn> {
             ),
           ),
           const SizedBox(height: 20),
-          // Summary Section
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.only(left: 40, right: 20), // Fine-tune left/right padding
-              alignment: Alignment.centerLeft, // Ensure alignment starts from the left
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    "Summary",
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    "Total box scanned: 2 Boxes",
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 16,
-                      color: Colors.black54,
-                    ),
-                  ),
-                  SizedBox(height: 5),
-                  Text(
-                    "Total items: 12 Jars",
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 16,
-                      color: Colors.black54,
-                    ),
-                  ),
-                  SizedBox(height: 5),
-                  Text(
-                    "From: HoneyBee.Co",
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 16,
-                      color: Colors.black54,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          // Summary Section (Removed here as it's now in the dialog)
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  setState(() {
-                    isScanning = !isScanning; // Toggle the scanning state
-                  });
+                  // Show the summary dialog when the "Done" button is pressed
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return const SummaryDialog(); // Show the summary dialog
+                    },
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.yellow[700],
@@ -174,9 +129,9 @@ class _ScanInState extends State<ScanIn> {
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 15),
                 ),
-                child: Text(
-                  isScanning ? "Done" : "Start Scanning",
-                  style: const TextStyle(
+                child: const Text(
+                  "Done",
+                  style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 18,
                     color: Colors.white,
@@ -191,6 +146,72 @@ class _ScanInState extends State<ScanIn> {
         currentIndex: 0, // Set the initial tab index for the agent
         role: 'Agent', // Pass the role to adapt the NavBar to the agent
       ),
+    );
+  }
+}
+
+class SummaryDialog extends StatelessWidget {
+  const SummaryDialog({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text(
+        "Summary",
+        style: TextStyle(
+          fontFamily: 'Roboto',
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          Text(
+            "Total box scanned: 2 Boxes",
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 16,
+              color: Colors.black54,
+            ),
+          ),
+          SizedBox(height: 5),
+          Text(
+            "Total items: 12 Jars",
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 16,
+              color: Colors.black54,
+            ),
+          ),
+          SizedBox(height: 5),
+          Text(
+            "From: HoneyBee.Co",
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 16,
+              color: Colors.black54,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AgentDashboard(),
+              ),
+            );
+          },
+          child: const Text(
+            "Close",
+            style: TextStyle(fontFamily: 'Roboto', fontSize: 16),
+          ),
+        ),
+      ],
     );
   }
 }

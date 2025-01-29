@@ -26,6 +26,7 @@ class _AgentsMapDropshipState extends State<AgentsMapDropship> {
   ];
 
   late GoogleMapController _mapController;
+  LatLng? _selectedAgentLocation; // Track the selected agent's location
 
   @override
   Widget build(BuildContext context) {
@@ -48,19 +49,17 @@ class _AgentsMapDropshipState extends State<AgentsMapDropship> {
       body: Stack(
         children: [
           // Delivery Status Footer (rendered first so it gets overlapped)
-          // Add this to the Positioned widget for the Delivery Status Footer
           Positioned(
-            bottom: 80, // Adjusted for the lower part
+            bottom: 10, // Adjusted for the lower part
             left: 16,
             right: 16,
             child: Column(
               children: [
                 Container(
-                  height: 80, // Delivery Status footer height
+                  height: 90, // Delivery Status footer height
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFBD46D),
-                    borderRadius: BorderRadius.circular(20.0),
+                    color: Colors.amber[200],
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.2),
@@ -72,89 +71,96 @@ class _AgentsMapDropshipState extends State<AgentsMapDropship> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      const SizedBox(height: 30),
                       const Text(
                         "Delivery Status",
                         style: TextStyle(
                           fontFamily: 'Roboto',
                           fontSize: 20,
-                          fontWeight: FontWeight.bold,
                           color: Colors.black,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 8), // Space between containers
+                const SizedBox(height: 0), // Space between containers
                 // Add lower section here
                 Container(
-                  height: 80,
+                  height: 150,
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(20.0),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, -2),
-                      ),
-                    ],
+                    border: Border.all(
+                      color: Colors.amber.shade100, // Border color
+                      width: 2.0, // Border width
+                    ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.person, size: 28, color: Colors.black),
-                          SizedBox(height: 4),
-                          Text(
-                            'Dropship Agent',
-                            style: TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 14,
-                              color: Colors.black,
+                  child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2.0, bottom: 10.0, right: 60.0),
+                          child: Text(
+                            'Dropship Agent: Luna Inara | DSAG3112',
+                            style: TextStyle(fontFamily: 'Roboto', fontSize: 16, color: Colors.black,
                             ),
                           ),
-                        ],
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.local_shipping, size: 28, color: Colors.black),
-                          SizedBox(height: 4),
-                          Text(
-                            'Delivery',
-                            style: TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 14,
-                              color: Colors.black,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                SizedBox(height: 14),
+                                Icon(Icons.person, size: 28, color: Colors.black),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Dropship',
+                                  style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black,
+                                  ),
+                                ),
+                                Text(
+                                  'Agent',
+                                  style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.store_mall_directory_outlined, size: 28, color: Colors.black),
-                          SizedBox(height: 4),
-                          Text(
-                            'Mall',
-                            style: TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 14,
-                              color: Colors.black,
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                SizedBox(height: 1),
+                                Icon(Icons.local_shipping, size: 28, color: Colors.black),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Delivery',
+                                  style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                SizedBox(height: 1),
+                                Icon(Icons.person_pin_circle_rounded, size: 28, color: Colors.black),
+                                SizedBox(height: 4),
+                                Text(
+                                  'You',
+                                  style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ]
                   ),
                 ),
               ],
             ),
           ),
-          // Map Section with curved borders (overlapping the Delivery Status)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
             child: ClipRRect(
@@ -164,11 +170,11 @@ class _AgentsMapDropshipState extends State<AgentsMapDropship> {
                 child: Stack(
                   children: [
                     SizedBox(
-                      height: 400,
+                      height: 430,
                       child: GoogleMap(
                         initialCameraPosition: const CameraPosition(
                           target: LatLng(3.1390, 101.6869), // Kuala Lumpur coordinates
-                          zoom: 12.0,
+                          zoom: 14.0,
                         ),
                         onMapCreated: (GoogleMapController controller) {
                           _mapController = controller;
@@ -183,22 +189,24 @@ class _AgentsMapDropshipState extends State<AgentsMapDropship> {
                                   ? BitmapDescriptor.hueYellow
                                   : BitmapDescriptor.hueGreen,
                             ),
+                            onTap: () {
+                              setState(() {
+                                _selectedAgentLocation = agent.location;
+                              });
+                            },
                           ),
                         )
                             .toSet(),
                       ),
                     ),
                     // Custom Agent Information Windows
-                    Positioned(
-                      top: 50,
-                      left: 20,
-                      child: _buildAgentInfoWindow(_agents[0]),
-                    ),
-                    Positioned(
-                      bottom: 300, // Adjusted to avoid full overlap with footer
-                      right: 70,
-                      child: _buildAgentInfoWindow(_agents[1]),
-                    ),
+                    if (_selectedAgentLocation != null)
+                      Positioned(
+                        top: _selectedAgentLocation!.latitude,
+                        left: _selectedAgentLocation!.longitude,
+                        child: _buildAgentInfoWindow(_agents.firstWhere((agent) =>
+                        agent.location == _selectedAgentLocation)),
+                      ),
                   ],
                 ),
               ),
@@ -232,11 +240,7 @@ class _AgentsMapDropshipState extends State<AgentsMapDropship> {
         children: [
           Text(
             agent.name,
-            style: const TextStyle(
-              fontFamily: 'Roboto',
-              fontSize: 14,
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
+            style: const TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 4),
@@ -246,10 +250,7 @@ class _AgentsMapDropshipState extends State<AgentsMapDropship> {
               const SizedBox(width: 4),
               Text(
                 '${agent.containers} containers',
-                style: const TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 13,
-                  color: Colors.black,
+                style: const TextStyle(fontFamily: 'Roboto', fontSize: 13, color: Colors.black,
                 ),
               ),
             ],
@@ -264,10 +265,7 @@ class _AgentsMapDropshipState extends State<AgentsMapDropship> {
               const SizedBox(width: 4),
               Text(
                 agent.status,
-                style: const TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 13,
-                  color: Colors.black,
+                style: const TextStyle(fontFamily: 'Roboto', fontSize: 13, color: Colors.black,
                 ),
               ),
             ],
@@ -277,6 +275,7 @@ class _AgentsMapDropshipState extends State<AgentsMapDropship> {
     );
   }
 }
+
 
 class DropshipAgent {
   final String name;
