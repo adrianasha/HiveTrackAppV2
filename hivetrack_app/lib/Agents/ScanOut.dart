@@ -253,13 +253,13 @@ class _ScanOutState extends State<ScanOut> {
                     if (agentSnapshot.exists) {
                       final fullAgentData = agentSnapshot.data();
                       dynamic agentData = fullAgentData?['Inventory'];
-                      int jars = agentData["StockOutBox"] ?? 0;
+                      int jars = agentData["StockOutBox"].length ?? 0;
 
                       await dropship_docRef.update({
-                        'Inventory.AwaitedJars': FieldValue.increment(jars * 6)
+                        'Inventory.AwaitedJars': agentData["StockOutBox"]
                       });
                       await agent_docRef.update({
-                        'Inventory.StockOutBox': 0,
+                        'Inventory.StockOutBox': [],
                       });
 
                       final dropshipData = (await dropship_docRef.get()).data();

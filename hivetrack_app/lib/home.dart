@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:hivetrack_app/Agents/AgentDashboard.dart';
 import 'package:hivetrack_app/Company/CompanyDashboard.dart';
 import 'package:hivetrack_app/Dropships/DropshipDashboard.dart';
-import 'package:hivetrack_app/EssentialFunctions.dart';
 import 'package:hivetrack_app/startPage.dart';
+import 'package:hivetrack_app/EssentialFunctions.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key});
@@ -17,7 +17,7 @@ class Home extends StatelessWidget {
         primarySwatch: Colors.amber,
         fontFamily: 'Raleway',
       ),
-      home: const SplashScreen(), // Start with the SplashScreen
+      home: const SplashScreen(),
     );
   }
 }
@@ -53,7 +53,6 @@ class SplashScreen extends StatelessWidget {
         String? userID = await getCurrentAuthUserId();
         if (userID != null) {
           Map<String, dynamic> UserData = await getUserDataWithParentName(userID);
-          print(UserData["user_data"]);
           navigateToDashboard(context, UserData['parent_name'], UserData["user_data"]);
         } else {
           navigateToDashboard(context, "", {}); // Navigate to Startpage

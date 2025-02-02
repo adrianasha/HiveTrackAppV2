@@ -24,7 +24,6 @@ class _AgentDashboardState extends State<AgentDashboard> {
   int stockOutCount = 5;
   int stockAvailable = 5;
   String ScannerCode = "";
-  final ValueNotifier<bool> scannerConnected = ValueNotifier<bool>(false);
 
 
   @override
@@ -70,10 +69,14 @@ class _AgentDashboardState extends State<AgentDashboard> {
 
                 final inventoryData = userData["Inventory"];
                 if (inventoryData != null) {
-                  if (inventoryData["StockInBox"] != null) stockInCount = inventoryData["StockInBox"];
-                  if (inventoryData["StockOutBox"] != null) stockOutCount = inventoryData["StockOutBox"];
-                  if (inventoryData["Available"] != null) stockAvailable = inventoryData["Available"];
+                  print("Beeeeeep");
+                  print(inventoryData["StockInBox"]);
+                  print(inventoryData["StockOutBox"]);
+                  if (inventoryData["StockInBox"] != null) stockInCount = inventoryData["StockInBox"] != null || inventoryData["StockInBox"] != [] ? inventoryData["StockInBox"].length : 0;
+                  if (inventoryData["StockOutBox"] != null) stockOutCount = inventoryData["StockOutBox"] != null || inventoryData["StockOutBox"] != [] ? inventoryData["StockOutBox"].length : 0;
+                  if (inventoryData["Available"] != null) stockAvailable = inventoryData["Available"] ?? 0;
                 }
+                ScannerCode = userData["scanner_code"] ?? "";
 
                 final userDocRef = FirebaseFirestore.instance.collection('Agent').doc(userId);
                 userDocRef.update({"Inventory.Mode": "None"}).catchError((error) {
@@ -95,9 +98,6 @@ class _AgentDashboardState extends State<AgentDashboard> {
       if (newStockOut != null) stockOutCount = newStockOut;
       if (newStockAvailable != null) stockAvailable = newStockAvailable;
     });
-  }
-  void updateisValid(bool valid) {
-    scannerConnected.value = valid;
   }
   void updateScannerCode(String code) {
     ScannerCode = code;
@@ -235,8 +235,8 @@ class _AgentDashboardState extends State<AgentDashboard> {
                             "code": ScannerCode
                           });
 
-                          bool success = awaitedData["isCodeValid"] != null ? true : false;
-                          if (success || true) {
+                          bool success = awaitedData["isCodeValid"] ?? false;
+                          if (success) {
                             await _webSocketService.sendMessageAndWaitForResponse({
                               "type": "userChangedStockMode",
                               "mode": "In"
@@ -248,12 +248,13 @@ class _AgentDashboardState extends State<AgentDashboard> {
                               ),
                             );
                           } else {
-                            // showConnectScannerDialog(
-                            //   context: context,
-                            //   webSocketService: _webSocketService,
-                            //   updateScannerCode: updateScannerCode,
-                            //   warning: true
-                            // );
+                            showConnectScannerDialog(
+                              context: context,
+                              webSocketService: _webSocketService,
+                              updateScannerCode: updateScannerCode,
+                                scannerCode: ScannerCode,
+                              warning: true
+                            );
                           }
                         },
                         icon: const Icon(Icons.arrow_upward_outlined, color: Colors.black),
@@ -284,8 +285,8 @@ class _AgentDashboardState extends State<AgentDashboard> {
                             "code": ScannerCode
                           });
 
-                          bool success = awaitedData["isCodeValid"] != null ? true : false;
-                          if (success || true) {
+                          bool success = awaitedData["isCodeValid"] ?? false;
+                          if (success) {
                             await _webSocketService.sendMessageAndWaitForResponse({
                               "type": "userChangedStockMode",
                               "mode": "Out"
@@ -297,19 +298,20 @@ class _AgentDashboardState extends State<AgentDashboard> {
                               ),
                             );
                           } else {
-                            // showConnectScannerDialog(
-                            //     context: context,
-                            //     webSocketService: _webSocketService,
-                            //     updateScannerCode: updateScannerCode,
-                            //     warning: true
-                            // );
+                            showConnectScannerDialog(
+                                context: context,
+                                webSocketService: _webSocketService,
+                                updateScannerCode: updateScannerCode,
+                                scannerCode: ScannerCode,
+                                warning: true
+                            );
                           }
                         },
                         icon: const Icon(Icons.arrow_downward, color: Colors.black),
                         label: const Text(
                           "Stock Out",
                           style: TextStyle(
-                            fontFamily: 'Roboto', fontSize: 14, color: Colors.black,
+                            fontFamily: 'Roboto', fontSize: 12, color: Colors.black,
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -332,7 +334,6 @@ class _AgentDashboardState extends State<AgentDashboard> {
                             context: context,
                             webSocketService: _webSocketService,
                             updateScannerCode: updateScannerCode,
-                            updateIsValid: updateisValid,
                             warning: false,
                             scannerCode: ScannerCode
                           );
@@ -347,14 +348,13 @@ class _AgentDashboardState extends State<AgentDashboard> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            ValueListenableBuilder<bool>(
-                              valueListenable: scannerConnected, // Listen to changes in the ValueNotifier
-                              builder: (context, isConnected, child) {
-                                return Icon(
-                                  isConnected ? Icons.wifi_outlined : Icons.wifi_off_sharp, // Conditional icon
-                                  color: isConnected ? Colors.green : Colors.grey[700], // Conditional color
-                                );
-                              },
+                            // Icon(
+                            //   isConnected ? Icons.wifi_outlined : Icons.wifi_off_sharp, // Conditional icon
+                            //   color: isConnected ? Colors.green : Colors.grey[700], // Conditional color
+                            // ),
+                            Icon(
+                              Icons.wifi, // Conditional icon
+                              color: Colors.black, // Conditional color
                             ),
                             SizedBox(width: 8),
                             Text(
@@ -431,7 +431,6 @@ Future<void> showConnectScannerDialog({
   required BuildContext context,
   required WebSocketService webSocketService,
   required Function(String) updateScannerCode,
-  required Function(bool) updateIsValid,
   required bool warning,
   required scannerCode
 }) async {
@@ -540,8 +539,8 @@ Future<void> showConnectScannerDialog({
                                   "type": "connectUserToScanner",
                                   "code": enteredCode
                                 });
-                                updateScannerCode(enteredCode);
 
+                                updateScannerCode(enteredCode);
                                 bool success = awaitedData["success"];
                                 if (success) {
                                   print("Awaited Connection Request Success!");
@@ -552,7 +551,6 @@ Future<void> showConnectScannerDialog({
                                       showDialog(
                                         context: parentContext, // Use parentContext
                                         builder: (BuildContext context) {
-                                          updateIsValid(success);
                                           return Dialog(
                                             backgroundColor: Colors.amber[100],
                                             shape: RoundedRectangleBorder(

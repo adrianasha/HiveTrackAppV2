@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../EssentialFunctions.dart';
 import '../NavBar.dart';
 import 'AgentDashboard.dart';
 import 'AgentStockInHist.dart';
@@ -165,37 +166,85 @@ class SummaryDialog extends StatelessWidget {
         ),
       ),
       content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: const [
-          Text(
-            "Total box scanned: 2 Boxes",
-            style: TextStyle(
-              fontFamily: 'Roboto',
-              fontSize: 16,
-              color: Colors.black54,
-            ),
-          ),
-          SizedBox(height: 5),
-          Text(
-            "Total items: 12 Jars",
-            style: TextStyle(
-              fontFamily: 'Roboto',
-              fontSize: 16,
-              color: Colors.black54,
-            ),
-          ),
-          SizedBox(height: 5),
-          Text(
-            "From: HoneyBee.Co",
-            style: TextStyle(
-              fontFamily: 'Roboto',
-              fontSize: 16,
-              color: Colors.black54,
-            ),
-          ),
-        ],
-      ),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FutureBuilder<String?>(
+          future: getCurrentAuthUserId(),
+          builder: (context, secondSnapshot) {
+            if (secondSnapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            } else if (secondSnapshot.hasError) {
+              return Scaffold(
+                body: Center(child: Text('Error: ${secondSnapshot.error}')),
+              );
+            } else if (!secondSnapshot.hasData) {
+              return const Scaffold(
+                body: Center(child: Text('No verified user data found.')),
+              );
+            } else {
+              final userId = secondSnapshot.data;
+
+              return FutureBuilder<Map<String, dynamic>>(
+                future: getUserDataWithParentName(userId!),
+                builder: (context, secondSnapshot) {
+                  if (secondSnapshot.connectionState == ConnectionState.waiting) {
+                    return const Scaffold(
+                      body: Center(child: CircularProgressIndicator()),
+                    );
+                  } else if (secondSnapshot.hasError) {
+                    return Scaffold(
+                      body: Center(child: Text('Error: ${secondSnapshot.error}')),
+                    );
+                  } else if (!secondSnapshot.hasData) {
+                    return const Scaffold(
+                      body: Center(child: Text('No verified user data found.')),
+                    );
+                  } else {
+                    final data = secondSnapshot.data;
+                    final inventoryData = data!["user_data"]["Inventory"];
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Total box scanned: ${inventoryData["StockInBox"] != null && inventoryData["StockInBox"] is List ? inventoryData["StockInBox"].length : 0} Boxes",
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 16,
+                            color: Colors.black54,
+                          ),
+                        ),
+                        SizedBox(height: 5),
+                        Text(
+                          "Total items: ${inventoryData["StockInBox"] != null && inventoryData["StockInBox"] is List ? inventoryData["StockInBox"].length * 6 : 0} Jars",
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 16,
+                            color: Colors.black54,
+                          ),
+                        ),
+                        SizedBox(height: 5),
+                        Text(
+                          "From: HoneyBee.Co",
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 16,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                },
+              );
+            }
+          },
+        ),
+      ],
+    ),
       actions: [
         TextButton(
           onPressed: () {

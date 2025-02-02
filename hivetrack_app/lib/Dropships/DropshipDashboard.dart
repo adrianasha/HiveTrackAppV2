@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hivetrack_app/EssentialFunctions.dart';
+import 'package:hivetrack_app/WebSocketService.dart';
 import 'package:intl/intl.dart';
 import '../NavBar.dart';
 import 'DropshipHistory.dart';
-import 'DropshipScanIn.dart';
+import 'DropshipQRScan.dart';
 
 class DropshipDashboard extends StatefulWidget {
   const DropshipDashboard({Key? key}) : super(key: key);
@@ -20,8 +21,10 @@ class _DropshipDashboardState extends State<DropshipDashboard> {
   int availableStock = 0;
   int awaitedJars = 0;
   List<Map<String, dynamic>> activities = [];
-  double progress = 1; // Example progress, you can dynamically adjust this
+  double progress = 0.5;
   dynamic currentUserData;
+  String parentUserId = "";
+  bool activityCompleted = false; // Add a flag to track if the activity is completed
 
   @override
   void initState() {
@@ -40,17 +43,53 @@ class _DropshipDashboardState extends State<DropshipDashboard> {
       if (docSnapshot.exists) {
         var data = docSnapshot.data();
         currentUserData = data;
+
+        final CompanyLiveStorage = await WebSocketService().sendMessageAndWaitForResponse({
+          "type": "fetchCompanyLiveStorage",
+          "cid": data!["company_id"]
+        });
+        final FetchParentUserId = await WebSocketService().sendMessageAndWaitForResponse({
+          "type": "fetchDropShipAgentParentId",
+          "uid": currentUserData!["selected_agent"]
+        });
         setState(() {
-          username = data?["name"] ?? "Unknown";
-          stockInCount = data?["Inventory"]["StockInJars"] ?? 0;
-          stockOutCount = data?["Inventory"]["StockOutJars"] ?? 0;
-          availableStock = data?["Inventory"]["AvailableJars"] ?? 0;
-          awaitedJars = data?["Inventory"]["AwaitedJars"] ?? 0;
+          parentUserId = FetchParentUserId["ParentUserId"] ?? "Unknown";
+          username = data["name"] ?? "Unknown";
+          stockInCount = data["Inventory"]["StockInJars"] is List
+              ? data["Inventory"]["StockInJars"].length
+              : (data["Inventory"]["StockInJars"] ?? 0);
+          stockOutCount = data["Inventory"]["StockOutJars"] is List
+              ? data["Inventory"]["StockOutJars"].length
+              : (data["Inventory"]["StockOutJars"] ?? 0);
+          availableStock = data["Inventory"]["AvailableJars"] is List
+              ? data["Inventory"]["AvailableJars"].length
+              : (data["Inventory"]["AvailableJars"] ?? 0);
+
+          data["Inventory"]["AwaitedJars"].forEach((rfid) async {
+            if (CompanyLiveStorage["LiveStorage"] != null && CompanyLiveStorage["LiveStorage"][rfid] != null) {
+              CompanyLiveStorage["LiveStorage"][rfid].forEach((key, value) {
+                if (value["CanBeSold"] != null && value["CanBeSold"] == 0) {
+                  awaitedJars = awaitedJars + 1;
+                }
+              });
+            }
+          });
+          if (awaitedJars > 0) {
+            progress = 0.5;
+          } else {
+            progress = 1;
+          }
         });
       }
     } catch (e) {
       print("Error fetching Firestore data: $e");
     }
+  }
+
+  void markActivityCompleted() {
+    setState(() {
+      activityCompleted = true; // Set the activity as completed
+    });
   }
 
   @override
@@ -126,9 +165,10 @@ class _DropshipDashboardState extends State<DropshipDashboard> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 15),
               Container(
                 width: double.infinity,
+                height: 220,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.amber[50],
@@ -146,8 +186,7 @@ class _DropshipDashboardState extends State<DropshipDashboard> {
                         ),
                         ElevatedButton(
                           onPressed: () {
-                            // Add your logic for completing the activity here
-                            print("Activity Completed");
+                            markActivityCompleted(); // Mark activity as completed
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.amber[100], // Button color
@@ -164,60 +203,66 @@ class _DropshipDashboardState extends State<DropshipDashboard> {
                       ],
                     ),
                     const SizedBox(height: 0),
-                    Text("Ordered Amounts: $awaitedJars Jars", style: TextStyle(fontFamily: 'Roboto', fontSize: 14, fontWeight: FontWeight.normal)),
+                    // Show "No activities yet" if activity is completed
+                    if (activityCompleted)
+                      const Text(" No activities yet", style: TextStyle(fontFamily: 'Roboto', fontSize: 14, fontWeight: FontWeight.normal, color: Colors.grey))
+                    else
+                      Text("Ordered Amounts: $awaitedJars Jars", style: TextStyle(fontFamily: 'Roboto', fontSize: 14, fontWeight: FontWeight.normal)),
                     const SizedBox(height: 10),
-                    ListTile(
-                      leading: Column(
-                        children: [
-                          Icon(Icons.emoji_people, size: 28, color: Colors.amber),
-                          SizedBox(height: 8),
-                          Text('${currentUserData != null ? currentUserData["id"] : "Unknown"}', style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black)),
-                        ],
+                    // Show activity icons only if activity is not completed
+                    if (!activityCompleted) ...[
+                      ListTile(
+                        leading: Column(
+                          children: [
+                            Icon(Icons.emoji_people, size: 28, color: Colors.amber),
+                            SizedBox(height: 6),
+                            Text(parentUserId, style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black)),
+                          ],
+                        ),
+                        title: Column(
+                          children: [
+                            Icon(Icons.local_shipping, size: 28, color: Colors.amber),
+                            SizedBox(height: 8),
+                            Text('Delivery', style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black)),
+                          ],
+                        ),
+                        trailing: Column(
+                          children: [
+                            Icon(Icons.person_outline_outlined, size: 28, color: awaitedJars == 0 ? Colors.amber : Colors.black),
+                            SizedBox(height: 6),
+                            Text('You', style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black)),
+                          ],
+                        ),
                       ),
-                      title: Column(
-                        children: [
-                          Icon(Icons.local_shipping, size: 28, color: Colors.amber),
-                          SizedBox(height: 8),
-                          Text('Delivery', style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black)),
-                        ],
+                      const SizedBox(height: 10),
+                      // Horizontal Progress Bar
+                      Container(
+                        width: double.infinity,
+                        height: 6.0,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10), // Rounded corners
+                          color: Colors.amber[100], // Background color of the progress bar
+                        ),
+                        child: LinearProgressIndicator(
+                          value: progress,  // Set the dynamic progress value here
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.amber),  // Color of the progress
+                          backgroundColor: Colors.transparent,
+                        ),
                       ),
-                      trailing: Column(
-                        children: [
-                          Icon(Icons.person_outline_outlined, size: 28, color: awaitedJars == 0 ? Colors.amber : Colors.black),
-                          SizedBox(height: 8),
-                          Text('You', style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.black)),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    // Horizontal Progress Bar
-                    Container(
-                      width: double.infinity,
-                      height: 6.0,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10), // Rounded corners
-                        color: Colors.amber[100], // Background color of the progress bar
-                      ),
-                      child: LinearProgressIndicator(
-                        value: progress,  // Set the dynamic progress value here
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.amber),  // Color of the progress
-                        backgroundColor: Colors.transparent,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
+                      const SizedBox(height: 10),
+                    ],
                   ],
                 ),
               ),
               const SizedBox(height: 16),
-
               // Scan Inventory Button
               GestureDetector(
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => DropshipScanIn()));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => DropshipQRScan()));
                 },
                 child: Container(
                   width: double.infinity,
-                  height: 140,
+                  height: 130,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.amber[50],
@@ -242,7 +287,7 @@ class _DropshipDashboardState extends State<DropshipDashboard> {
                 },
                 child: Container(
                   width: double.infinity,
-                  height: 140,
+                  height: 130,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.amber[50],
@@ -269,3 +314,4 @@ class _DropshipDashboardState extends State<DropshipDashboard> {
     );
   }
 }
+

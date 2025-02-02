@@ -188,7 +188,7 @@ class AgentCard extends StatelessWidget {
                                     return Flexible(
                                       child: Text(
                                         "$city, $region",
-                                        style: const TextStyle(fontFamily: 'Roboto', fontSize: 13, color: Colors.black,
+                                        style: const TextStyle(fontFamily: 'Roboto', fontSize: 12, color: Colors.black,
                                         ),
                                         maxLines: 2, // Limit to 2 lines
                                         overflow: TextOverflow.ellipsis, // Add ellipsis for overflow
@@ -209,7 +209,7 @@ class AgentCard extends StatelessWidget {
                                 'Joined on ${agent['joinedDate']}',
                                 style: const TextStyle(
                                   fontFamily: 'Roboto',
-                                  fontSize: 13,
+                                  fontSize: 12,
                                   color: Colors.black,
                                 ),
                               ),

@@ -42,6 +42,7 @@ dependencies:
   geocoding: ^3.0.0
   lucide_icons: ^0.257.0
   camera: ^0.11.1
+  mobile_scanner: ^6.0.5
 
 dev_dependencies:
   flutter_test:
@@ -72,6 +73,9 @@ flutter:
       - assets/logo.png
       - assets/box-scanner.png
       - assets/flyingBeee.png
+      - assets/BEE1.png
+      - assets/agentBee.png
+      - assets/beez.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

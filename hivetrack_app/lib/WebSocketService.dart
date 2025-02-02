@@ -123,6 +123,8 @@ class WebSocketService {
     final Completer<dynamic> completer = Completer<dynamic>();
     final String requestID = generateCustomId(13, true, false);
 
+    print("Websocket Request being send");
+
     final registrationMessage = jsonEncode({
       'requestId': requestID,
       'request': message,

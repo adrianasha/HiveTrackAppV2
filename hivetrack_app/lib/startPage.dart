@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'Buyer/QRScanner.dart';
 import 'createAccount.dart';
 import 'loginPage.dart';
 
@@ -25,17 +26,21 @@ class StartpageState extends State<Startpage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 120),
+              const SizedBox(height: 90),
               Center(
                 child: Text(
                   "I’m using HiveTrack as the...",
-                  style: TextStyle(fontFamily: 'Roboto', fontSize: 25, fontWeight: FontWeight.bold, color: Colors.black87,
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 25,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
                 ),
               ),
               const SizedBox(height: 50),
               roleTile(
-                role: "Company", // Added role parameter
+                role: "Company",
                 icon: Icons.apartment,
                 title: "Company",
                 subtitle: "Monitor your sales, trends and demands.",
@@ -46,9 +51,9 @@ class StartpageState extends State<Startpage> {
                   });
                 },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
               roleTile(
-                role: "Agent", // Added role parameter
+                role: "Agent",
                 icon: Icons.person,
                 title: "Agent",
                 subtitle: "Manage inventory automation.",
@@ -59,9 +64,9 @@ class StartpageState extends State<Startpage> {
                   });
                 },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
               roleTile(
-                role: "Dropship_Agent", // Added role parameter
+                role: "Dropship_Agent",
                 icon: Icons.groups,
                 title: "Dropship Agent",
                 subtitle: "Manage and sell products.",
@@ -72,20 +77,38 @@ class StartpageState extends State<Startpage> {
                   });
                 },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
+              roleTile(
+                role: "Honey_Buyer",
+                icon: Icons.shopping_basket,
+                title: "Honey Buyer",
+                subtitle: "Buy authentic proven honey.",
+                isSelected: selectedRole == "Honey_Buyer",
+                onTap: () {
+                  setState(() {
+                    selectedRole = "Honey_Buyer";
+                  });
+                },
+              ),
+              const SizedBox(height: 40),
               Center(
                 child: ElevatedButton(
                   onPressed: () {
                     if (selectedRole == "Company") {
-                      showAccountDialog(); // Show dialog if the role is Company
+                      showAccountDialog();
                     } else if (selectedRole == "Agent") {
                       showAccountDialog();
-                    } else if (selectedRole == "Dropship_Agent"){
+                    } else if (selectedRole == "Dropship_Agent") {
                       showAccountDialog();
+                    } else if (selectedRole == "Honey_Buyer") {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => QRScanner()),
+                      );
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFBD46D), // Button color
+                    backgroundColor: const Color(0xFFFBD46D),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -96,7 +119,10 @@ class StartpageState extends State<Startpage> {
                   ),
                   child: const Text(
                     "Continue",
-                    style: TextStyle(fontFamily: 'Roboto', fontSize: 17, color: Colors.black,
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 16,
+                      color: Colors.black,
                     ),
                   ),
                 ),
@@ -149,7 +175,10 @@ class StartpageState extends State<Startpage> {
                   children: const [
                     Text(
                       "Yes! Log in",
-                      style: TextStyle(fontFamily: 'Roboto', fontSize: 18, color: Colors.black,
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 18,
+                        color: Colors.black,
                       ),
                     ),
                     SizedBox(width: 8),
@@ -164,7 +193,7 @@ class StartpageState extends State<Startpage> {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => CreateAccount(role: selectedRole), // Pass the selected role
+                      builder: (context) => CreateAccount(role: selectedRole),
                     ),
                   );
                 },
