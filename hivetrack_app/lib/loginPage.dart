@@ -3,6 +3,7 @@ import 'Agents/AgentDashboard.dart';
 import 'Company/CompanyDashboard.dart';
 import 'Dropships/DropshipDashboard.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'WebSocketService.dart';
 
 class LoginPage extends StatefulWidget {
   final String role;
@@ -103,7 +104,6 @@ class LoginPageState extends State<LoginPage> {
                     ElevatedButton(
                       onPressed: () async {
                         try {
-                          print('okay lessgo');
                           String email = _emailController.text.trim();
                           String password = _passwordController.text.trim();
 
@@ -116,6 +116,12 @@ class LoginPageState extends State<LoginPage> {
 
                           UserCredential userCredential = await FirebaseAuth.instance
                               .signInWithEmailAndPassword(email: email, password: password);
+
+                          String uid = userCredential.user?.uid ?? '';
+                          if (uid.isNotEmpty) {
+                            print("User UID: $uid");
+                            await WebSocketService().setUID(uid);
+                          }
 
                           if (widget.role == 'Company') {
                             Navigator.pushReplacement(

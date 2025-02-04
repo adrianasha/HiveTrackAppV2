@@ -29,11 +29,10 @@ class _ScanInState extends State<ScanIn> {
             icon: const Icon(Icons.more_vert, color: Colors.black),
             onSelected: (String value) {
               if (value == 'History') {
-                // Navigate to the History page
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AgentStockInHistory(), // Create a placeholder HistoryPage
+                    builder: (context) => AgentStockInHistory(),
                   ),
                 );
               }
@@ -67,27 +66,27 @@ class _ScanInState extends State<ScanIn> {
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Text(
-                      "+ 1 box",
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 16,
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                    Text(
-                      "+ 1 box",
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 16,
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+                  // children: const [
+                  //   Text(
+                  //     "+ 1 box",
+                  //     style: TextStyle(
+                  //       fontFamily: 'Roboto',
+                  //       fontSize: 16,
+                  //       color: Colors.green,
+                  //       fontWeight: FontWeight.bold,
+                  //     ),
+                  //   ),
+                  //   SizedBox(width: 10),
+                  //   Text(
+                  //     "+ 1 box",
+                  //     style: TextStyle(
+                  //       fontFamily: 'Roboto',
+                  //       fontSize: 16,
+                  //       color: Colors.green,
+                  //       fontWeight: FontWeight.bold,
+                  //     ),
+                  //   ),
+                  // ],
                 ),
                 const SizedBox(height: 20),
                 const Text(
@@ -100,7 +99,7 @@ class _ScanInState extends State<ScanIn> {
                 ),
                 const SizedBox(height: 10),
                 LinearProgressIndicator(
-                  value: 0.7, // Adjust the value dynamically if needed
+                  value: 0.7,
                   color: Colors.yellow[700],
                   backgroundColor: Colors.yellow[200],
                 ),
@@ -108,18 +107,17 @@ class _ScanInState extends State<ScanIn> {
             ),
           ),
           const SizedBox(height: 20),
-          // Summary Section (Removed here as it's now in the dialog)
+          // Done Button
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  // Show the summary dialog when the "Done" button is pressed
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
-                      return const SummaryDialog(); // Show the summary dialog
+                      return const SummaryDialog();
                     },
                   );
                 },
@@ -144,8 +142,8 @@ class _ScanInState extends State<ScanIn> {
         ],
       ),
       bottomNavigationBar: NavBar(
-        currentIndex: 0, // Set the initial tab index for the agent
-        role: 'Agent', // Pass the role to adapt the NavBar to the agent
+        currentIndex: 0,
+        role: 'Agent',
       ),
     );
   }
@@ -166,85 +164,27 @@ class SummaryDialog extends StatelessWidget {
         ),
       ),
       content: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        FutureBuilder<String?>(
-          future: getCurrentAuthUserId(),
-          builder: (context, secondSnapshot) {
-            if (secondSnapshot.connectionState == ConnectionState.waiting) {
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
-            } else if (secondSnapshot.hasError) {
-              return Scaffold(
-                body: Center(child: Text('Error: ${secondSnapshot.error}')),
-              );
-            } else if (!secondSnapshot.hasData) {
-              return const Scaffold(
-                body: Center(child: Text('No verified user data found.')),
-              );
-            } else {
-              final userId = secondSnapshot.data;
-
-              return FutureBuilder<Map<String, dynamic>>(
-                future: getUserDataWithParentName(userId!),
-                builder: (context, secondSnapshot) {
-                  if (secondSnapshot.connectionState == ConnectionState.waiting) {
-                    return const Scaffold(
-                      body: Center(child: CircularProgressIndicator()),
-                    );
-                  } else if (secondSnapshot.hasError) {
-                    return Scaffold(
-                      body: Center(child: Text('Error: ${secondSnapshot.error}')),
-                    );
-                  } else if (!secondSnapshot.hasData) {
-                    return const Scaffold(
-                      body: Center(child: Text('No verified user data found.')),
-                    );
-                  } else {
-                    final data = secondSnapshot.data;
-                    final inventoryData = data!["user_data"]["Inventory"];
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Total box scanned: ${inventoryData["StockInBox"] != null && inventoryData["StockInBox"] is List ? inventoryData["StockInBox"].length : 0} Boxes",
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 16,
-                            color: Colors.black54,
-                          ),
-                        ),
-                        SizedBox(height: 5),
-                        Text(
-                          "Total items: ${inventoryData["StockInBox"] != null && inventoryData["StockInBox"] is List ? inventoryData["StockInBox"].length * 6 : 0} Jars",
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 16,
-                            color: Colors.black54,
-                          ),
-                        ),
-                        SizedBox(height: 5),
-                        Text(
-                          "From: HoneyBee.Co",
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 16,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      ],
-                    );
-                  }
-                },
-              );
-            }
-          },
-        ),
-      ],
-    ),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // First FutureBuilder for user ID
+          FutureBuilder<String?>(
+            future: getCurrentAuthUserId(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}');
+              } else if (!snapshot.hasData) {
+                return const Text('No verified user data found.');
+              } else {
+                final userId = snapshot.data!;
+                return UserSummary(userId: userId);
+              }
+            },
+          ),
+        ],
+      ),
       actions: [
         TextButton(
           onPressed: () {
@@ -261,6 +201,53 @@ class SummaryDialog extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class UserSummary extends StatelessWidget {
+  final String userId;
+
+  const UserSummary({required this.userId, Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: getUserDataWithParentName(userId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        } else if (!snapshot.hasData) {
+          return const Text('No verified user data found.');
+        } else {
+          final data = snapshot.data!;
+          final inventoryData = data["user_data"]["Inventory"];
+          final boxCount = inventoryData["StockInBox"]?.length ?? 0;
+          final jarCount = boxCount * 6;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Total box scanned: $boxCount Boxes",
+                style: TextStyle(fontFamily: 'Roboto', fontSize: 16, color: Colors.black54),
+              ),
+              SizedBox(height: 5),
+              Text(
+                "Total items: $jarCount Jars",
+                style: TextStyle(fontFamily: 'Roboto', fontSize: 16, color: Colors.black54),
+              ),
+              SizedBox(height: 5),
+              Text(
+                "From: HoneyBee.Co",
+                style: TextStyle(fontFamily: 'Roboto', fontSize: 16, color: Colors.black54),
+              ),
+            ],
+          );
+        }
+      },
     );
   }
 }

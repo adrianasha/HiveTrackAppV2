@@ -14,7 +14,6 @@ class AgentsMapDropship extends StatefulWidget {
 
 class _AgentsMapDropshipState extends State<AgentsMapDropship> {
   late GoogleMapController _mapController;
-  LatLng? _selectedAgentLocation;
   bool _isStatusVisible = false;
   String _statusText = "Activity Status";
   Map<String, dynamic> _selectedAgent = {};
@@ -27,8 +26,6 @@ class _AgentsMapDropshipState extends State<AgentsMapDropship> {
       QuerySnapshot agentsSnapshot = await FirebaseFirestore.instance.collection('Dropship_Agent').get();
 
       List<dynamic> validUsersID = userData["user_data"]["covered_agent"] ?? [];
-      print("JAGGER");
-      print(validUsersID);
       List<Map<String, dynamic>> agents = [];
       for (var doc in agentsSnapshot.docs) {
         if (validUsersID.contains(doc.id)) {
@@ -125,10 +122,19 @@ class _AgentsMapDropshipState extends State<AgentsMapDropship> {
                       final double lat = entry['latitude'] ?? 0.0;
                       final double lng = entry['longitude'] ?? 0.0;
 
+                      BitmapDescriptor markerIcon;
+                      if (entry["Inventory"] is Map &&
+                          entry["Inventory"]["AwaitedJars"] is List &&
+                          !entry["Inventory"]["AwaitedJars"].isEmpty) {
+                        markerIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow);
+                      } else {
+                        markerIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen);
+                      }
+
                       return Marker(
                         markerId: MarkerId(agentName),
                         position: LatLng(lat, lng),
-                        icon: BitmapDescriptor.defaultMarkerWithHue(entry["AwaitedJars"] is List && entry["AwaitedJars"].length == 0 ? BitmapDescriptor.hueGreen : BitmapDescriptor.hueYellow),
+                        icon: markerIcon,
                         onTap: () => _toggleStatus(entry),
                       );
                     }).toSet();
@@ -153,114 +159,137 @@ class _AgentsMapDropshipState extends State<AgentsMapDropship> {
             bottom: 10,
             left: 16,
             right: 16,
-            child: Column(
-              children: [
-                Container(
-                  height: 60,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.amber[200],
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, -2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 16.0),
-                        child: Text(
-                          _statusText,
-                          style: const TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 20,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          _isStatusVisible ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_up,
-                          size: 28,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _isStatusVisible = !_isStatusVisible;
-                            _statusText = _isStatusVisible ? "Delivery Status" : "Activity Status";
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                if (_isStatusVisible && _selectedAgent != {})
+            child: SingleChildScrollView( // Wrap this with SingleChildScrollView
+              child: Column(
+                children: [
                   Container(
-                    height: 150,
+                    height: 60,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(
-                        color: Colors.amber.shade100,
-                        width: 2.0,
-                      ),
+                      color: Colors.amber[200],
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, -2),
+                        ),
+                      ],
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Transform.translate(
-                          offset: const Offset(-43, -30), // Move text upward by 5 pixels
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 60.0),
-                            child: Text(
-                              'Dropship Agent: ${_selectedAgent["id"]}',
-                              style: const TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 16,
-                                color: Colors.black,
-                              ),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 16.0),
+                          child: Text(
+                            _statusText,
+                            style: const TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 20,
+                              color: Colors.black,
                             ),
                           ),
                         ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.person, size: 28, color: Colors.black),
-                                  Text('You', style: TextStyle(fontFamily:'Roboto', fontSize: 14)),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.local_shipping, size: 28, color: Colors.black),
-                                  Text('Delivery', style: TextStyle(fontFamily:'Roboto',fontSize: 14)),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.person_pin_circle_rounded, size: 28, color: Colors.black),
-                                  Text('${_selectedAgent["name"]}', style: const TextStyle(fontFamily:'Roboto',fontSize: 14)),
-                                ],
-                              ),
-                            ),
-                          ],
+                        IconButton(
+                          icon: Icon(
+                            _isStatusVisible ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_up,
+                            size: 28,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _isStatusVisible = !_isStatusVisible;
+                              _statusText = _isStatusVisible ? "Delivery Status" : "Activity Status";
+                            });
+                          },
                         ),
                       ],
                     ),
                   ),
-              ],
+                  if (_isStatusVisible && _selectedAgent != {})
+                    Container(
+                      height: 150,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(
+                          color: Colors.amber.shade100,
+                          width: 2.0,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Transform.translate(
+                            offset: const Offset(-43, -30), // Move text upward by 5 pixels
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 60.0),
+                              child: Text(
+                                'Dropship Agent: ${_selectedAgent["id"]}',
+                                style: const TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 16,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              Flexible(
+                                flex: 1,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.person, size: 28, color: Colors.amber),
+                                      Text('You', style: TextStyle(fontFamily: 'Roboto', fontSize: 14)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Flexible(
+                                flex: 1,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.local_shipping, size: 28, color: Colors.amber),
+                                      Text('Delivery', style: TextStyle(fontFamily: 'Roboto', fontSize: 14)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Flexible(
+                                flex: 1,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.person_pin_circle_rounded,
+                                        size: 28,
+                                        color: _selectedAgent["Inventory"] is Map &&
+                                            _selectedAgent["Inventory"]["AwaitedJars"] is List &&
+                                            _selectedAgent["Inventory"]["AwaitedJars"].isNotEmpty
+                                            ? Colors.black
+                                            : Colors.amber,
+                                      ),
+                                      Text('${_selectedAgent["name"]}',
+                                          style: const TextStyle(fontFamily: 'Roboto', fontSize: 14)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ],

@@ -1,8 +1,38 @@
 import 'package:flutter/material.dart';
-
 import '../NavBar.dart';
 
 class AgentStockOutHistory extends StatelessWidget {
+  final List<Map<String, dynamic>> stockData = [
+    {
+      "name": "Thaqif Sha",
+      "id": "DSAG6282",
+      "date": "Oct 29, 2024",
+      "containers": "10 containers",
+      "status": "Pending",
+    },
+    {
+      "name": "Luna Inara",
+      "id": "DSAG3112",
+      "date": "Oct 29, 2024",
+      "containers": "20 containers",
+      "status": "Completed",
+    },
+    {
+      "name": "Ahmad Fauzi",
+      "id": "DSAG1123",
+      "date": "Nov 02, 2024",
+      "containers": "5 containers",
+      "status": "Completed",
+    },
+    {
+      "name": "Siti Khadijah",
+      "id": "DSAG7456",
+      "date": "Nov 10, 2024",
+      "containers": "15 containers",
+      "status": "Pending",
+    },
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -11,7 +41,10 @@ class AgentStockOutHistory extends StatelessWidget {
         elevation: 0,
         title: Text(
           'Stock In History',
-          style: TextStyle(fontFamily: 'Roboto', fontSize: 25, color: Colors.black,
+          style: TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 25,
+            color: Colors.black,
           ),
         ),
         leading: IconButton(
@@ -36,15 +69,9 @@ class AgentStockOutHistory extends StatelessWidget {
                 ),
                 child: ListView.builder(
                   padding: EdgeInsets.all(16),
-                  itemCount: 5, // Replace with your dynamic list count
+                  itemCount: stockData.length,
                   itemBuilder: (context, index) {
-                    return StockItemCard(
-                      name: index % 2 == 0 ? "Thaqif Sha" : "Luna Inara",
-                      id: index % 2 == 0 ? "DSAG6282" : "DSAG3112",
-                      date: "Oct 29, 2024",
-                      containers: index % 2 == 0 ? "10 containers" : "20 containers",
-                      status: index % 2 == 0 ? "Pending" : "Completed",
-                    );
+                    return StockItemCard(stockInfo: stockData[index]);
                   },
                 ),
               ),
@@ -61,19 +88,9 @@ class AgentStockOutHistory extends StatelessWidget {
 }
 
 class StockItemCard extends StatelessWidget {
-  final String name;
-  final String id;
-  final String date;
-  final String containers;
-  final String status;
+  final Map<String, dynamic> stockInfo;
 
-  const StockItemCard({
-    required this.name,
-    required this.id,
-    required this.date,
-    required this.containers,
-    required this.status,
-  });
+  const StockItemCard({required this.stockInfo});
 
   @override
   Widget build(BuildContext context) {
@@ -85,13 +102,10 @@ class StockItemCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(10),
-              ),
+            CircleAvatar(
+              radius: 25,
+              backgroundColor: Colors.amber[200],
+              child: Icon(Icons.person, size: 30, color: Colors.black),
             ),
             SizedBox(width: 16),
             Expanded(
@@ -102,8 +116,11 @@ class StockItemCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '$name  |  $id',
-                        style: TextStyle(fontFamily: 'Roboto', fontSize: 16, fontWeight: FontWeight.bold,
+                        '${stockInfo["name"]}  |  ${stockInfo["id"]}',
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                       Icon(Icons.more_horiz_rounded, color: Colors.grey),
@@ -114,14 +131,20 @@ class StockItemCard extends StatelessWidget {
                     children: [
                       Icon(Icons.shopping_cart, size: 18, color: Colors.grey),
                       SizedBox(width: 8),
-                      Text(containers,
-                        style: TextStyle(fontFamily: 'Roboto', fontSize: 13,
+                      Text(
+                        stockInfo["containers"],
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 13,
                         ),
                       ),
                       Spacer(),
                       Text(
-                        date,
-                        style: TextStyle(fontFamily: 'Roboto', fontSize: 13, color: Colors.grey[600],
+                        stockInfo["date"],
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 13,
+                          color: Colors.grey[600],
                         ),
                       ),
                     ],
@@ -132,11 +155,14 @@ class StockItemCard extends StatelessWidget {
                       Icon(
                         Icons.check_circle,
                         size: 14,
-                        color: status == "Completed" ? Colors.green : Colors.orange,
+                        color: stockInfo["status"] == "Completed" ? Colors.green : Colors.orange,
                       ),
                       SizedBox(width: 8),
-                      Text(status,
-                        style: TextStyle(fontFamily: 'Roboto', fontSize: 13,
+                      Text(
+                        stockInfo["status"],
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 13,
                         ),
                       ),
                     ],

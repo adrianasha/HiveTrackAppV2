@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:hivetrack_app/EssentialFunctions.dart';
+import 'package:hivetrack_app/WebSocketService.dart';
 import '../NavBar.dart';
 
 class CompanyRegionalSales extends StatefulWidget {
@@ -89,7 +90,40 @@ class _CompanyRegionalSalesState extends State<CompanyRegionalSales> {
     }
   }
   // Custom function to show additional details in a popup
-  void _showDetailsPopup(BuildContext context, String title, String agent, String dropshipAgent, String id) {
+  Future<void> _showDetailsPopup(BuildContext context, String title, String agent, Map<String,dynamic> agentData, String id) async {
+    String parentAgentName = "Unknown";
+    List<String> dropshipAgentsList = [];
+
+    if (id.contains("DSAG") && agentData["selected_agent"] != null) {
+      final parentData = await WebSocketService().sendMessageAndWaitForResponse({ "type": "fetchDropShipAgentParentName", "uid": agentData["selected_agent"] });
+
+      bool succeed = parentData["success"] ?? false;
+      if (succeed == true && parentData["ParentUserName"] != null) {
+        parentAgentName = parentData["ParentUserName"];
+      }
+    } else if (id.contains("AG") && agentData["covered_agent"] != null) {
+      // Create a list of Future objects to be awaited
+      List<Future<void>> futures = [];
+
+      agentData["covered_agent"].forEach((agentId) {
+        futures.add(FirebaseFirestore.instance.collection("Dropship_Agent").doc(agentId).get().then((snapshot) {
+          if (snapshot.exists) {
+            final dropshipAgentDATA = snapshot.data() as Map<String, dynamic>;
+            if (dropshipAgentDATA["name"] != null && dropshipAgentDATA["id"] != null) {
+              String name = dropshipAgentDATA["name"];
+              String id = dropshipAgentDATA["id"];
+
+              String newString = "$name | $id";
+              dropshipAgentsList.add(newString);
+            }
+          }
+        }));
+      });
+
+      await Future.wait(futures);
+    }
+    print(dropshipAgentsList);
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -101,12 +135,22 @@ class _CompanyRegionalSalesState extends State<CompanyRegionalSales> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Agent: $agent | $id',
+              Text('Name: $agent | $id',
                   style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.normal)),
               SizedBox(height: 8),
-              Text('Dropship Agents: $dropshipAgent',
-                  style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.normal),
-              ),
+              if (id.contains("DSAG"))
+                Text('Dropship Agent to: $parentAgentName',
+                    style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.normal),
+                )
+              else
+                Column(
+                  children: dropshipAgentsList.map((agent) {
+                    return Text(
+                      'Dropship Agent to: $agent',
+                      style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.normal),
+                    );
+                  }).toList(),
+                )
             ],
           ),
           actions: [
@@ -209,12 +253,12 @@ class _CompanyRegionalSalesState extends State<CompanyRegionalSales> {
                             infoWindow: InfoWindow(
                               title: agentId.contains("DSAG") ? 'Dropship Agent' : 'Agent',
                               snippet: '$agentName | $agentId',
-                              onTap: () {
-                                _showDetailsPopup(
+                              onTap: () async {
+                                await _showDetailsPopup(
                                   context,
                                   agentId.contains("DSAG") ? 'Dropship Agent' : 'Honey Agent',
                                   agentName,
-                                  '', // Parent agent info if needed
+                                  entry,
                                   agentId,
                                 );
                               },

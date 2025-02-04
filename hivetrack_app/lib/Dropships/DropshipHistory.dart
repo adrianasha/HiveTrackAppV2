@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../NavBar.dart';
+
 class DropshipHistory extends StatelessWidget {
   const DropshipHistory({Key? key}) : super(key: key);
 
@@ -24,31 +26,31 @@ class DropshipHistory extends StatelessWidget {
       ),
       body: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ToggleButton(label: 'Stock In', isSelected: false),
-                const SizedBox(width: 10),
-                ToggleButton(label: 'Stock Out', isSelected: true),
-              ],
-            ),
-          ),
+          // Container(
+          //   padding: const EdgeInsets.symmetric(vertical: 8.0),
+          //   child: Row(
+          //     mainAxisAlignment: MainAxisAlignment.center,
+          //     children: [
+          //       ToggleButton(label: 'Stock In', isSelected: false),
+          //       const SizedBox(width: 10),
+          //       ToggleButton(label: 'Stock Out', isSelected: true),
+          //     ],
+          //   ),
+          // ),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16.0),
               children: [
                 InventoryCard(
-                  id: 'AG1005',
-                  date: 'Nov 15, 2024',
-                  jars: 30,
+                  id: 'AG0384',
+                  date: 'Feb 6, 2025',
+                  jars: 6,
                   status: 'Pending',
                 ),
                 HistoryCard(quantity: '2 Jars', date: 'Oct 28, 2024'),
                 HistoryCard(quantity: '1 Jar', date: 'Oct 29, 2024'),
                 InventoryCard(
-                  id: 'AG1005',
+                  id: 'AG0384',
                   date: 'Oct 10, 2024',
                   jars: 30,
                   status: 'Completed',
@@ -58,18 +60,9 @@ class DropshipHistory extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: NavBar(
         currentIndex: 0,
-        selectedItemColor: Colors.amber.shade400,
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.mail), label: 'Inbox'),
-          BottomNavigationBarItem(
-              icon: Icon(LucideIcons.bell), label: 'Notifications'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
-        ],
+        role: 'Dropship_Agent',
       ),
     );
   }
@@ -140,9 +133,14 @@ class InventoryCard extends StatelessWidget {
                   ),
                   Row(
                     children: [
-                      const Icon(Icons.inbox, size: 16, color: Colors.black54),
+                      Image.asset(
+                        'assets/honeyjar.png', // Path to the image
+                        width: 16,
+                        height: 16,
+                      ),
                       const SizedBox(width: 4),
-                      Text('$jars Jars',
+                      Text(
+                        '$jars Jars',
                         style: TextStyle(fontFamily: 'Roboto', fontSize: 13),
                       ),
                     ],

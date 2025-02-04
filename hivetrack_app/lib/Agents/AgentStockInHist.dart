@@ -21,7 +21,7 @@ class AgentStockInHistory extends StatelessWidget {
         elevation: 0,
       ),
       body: ListView.builder(
-        itemCount: 5,
+        itemCount: 2,
         padding: EdgeInsets.all(16.0),
         itemBuilder: (context, index) {
           return Card(

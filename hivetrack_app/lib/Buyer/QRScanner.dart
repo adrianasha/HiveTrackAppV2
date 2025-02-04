@@ -1,6 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hivetrack_app/Buyer/qrInfo.dart';
+import 'package:hivetrack_app/WebSocketService.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+
+import '../EssentialFunctions.dart';
 
 class QRScanner extends StatefulWidget {
   @override
@@ -56,11 +60,46 @@ class _QRScannerState extends State<QRScanner> {
     );
   }
 
-
   @override
   void dispose() {
     _cameraController.dispose();
     super.dispose();
+  }
+
+  void scanError() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,  // Prevent dismissing by tapping outside
+      builder: (BuildContext context) {
+        return Center(  // Ensure it's centered
+          child: AlertDialog(
+            backgroundColor: Colors.white,
+            content: Text(
+              'The QR has been scanned.',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _isScanning = true; // Resume scanning when returning
+                  });
+                  Navigator.of(context).pop();  // Close the dialog
+                },
+                child: Text(
+                  'OK',
+                  style: TextStyle(fontSize: 16, color: Colors.blue),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -86,25 +125,77 @@ class _QRScannerState extends State<QRScanner> {
           // Camera preview
           MobileScanner(
             controller: _cameraController,
-            onDetect: (capture) {
+            onDetect: (capture) async {
               if (_isScanning) {
                 setState(() {
                   _isScanning = false; // Stop scanning after a code is detected
                 });
 
-                String scannedData = capture.barcodes.first.rawValue ?? "No data";
+                final List<Barcode> barcodes = capture.barcodes;
+                if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
+                  try {
+                    final barcodeJsonData = jsonDecode(barcodes.first.rawValue!);
 
-                // Navigate to black screen with scanned data
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => QRInfo(scannedData: scannedData),
-                  ),
-                ).then((_) {
+                    if (barcodeJsonData is Map<String, dynamic> &&
+                        barcodeJsonData.containsKey("parentRFID") &&
+                        barcodeJsonData.containsKey("qrcode")) {
+
+                      final companyLiveStorage = await WebSocketService().sendMessageAndWaitForResponse({
+                        "type": "fetchAllLiveStorage"
+                      });
+
+                      bool successed = companyLiveStorage["success"] ?? false;
+                      if (successed) {
+                        Map<String, dynamic> liveStorage = companyLiveStorage["LiveStorageMap"] ?? {};
+
+                        // Check if the scanned parentRFID exists in live storage
+                        bool found = false;
+                        bool hassend = false;
+                        for (var companyId in liveStorage.keys) {
+                          var storage = liveStorage[companyId];
+                          if (storage.containsKey(barcodeJsonData["parentRFID"]) && storage[barcodeJsonData["parentRFID"]].containsKey(barcodeJsonData["qrcode"])) {
+                            if (storage[barcodeJsonData["parentRFID"]][barcodeJsonData["qrcode"]]["CanBeSold"] < 3) {
+                              found = true;
+                              String imagePath = 'assets/honey-details.png'; // Change this path as needed
+
+                              // Navigate to QRInfo with the image path
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => QRInfo(imageUrl: imagePath, scannedData: barcodeJsonData),
+                                ),
+                              ).then((_) {
+                                setState(() {
+                                  _isScanning = true; // Resume scanning when returning
+                                });
+                              });
+                              return;
+                            } else {
+                              hassend = true;
+                              scanError();
+                            }
+                          }
+                        }
+
+                        // If the product is NOT found in Live Storage, show the warning alert
+                        if (!found && !hassend) {
+                          _showWarningDialog();
+                        }
+                      } else {
+                        _showWarningDialog(); // Show warning if fetching Live Storage fails
+                      }
+                    } else {
+                      _showWarningDialog(); // Show warning if JSON does not contain expected fields
+                    }
+                  } catch (e) {
+                    print("Invalid JSON: ${barcodes.first.rawValue}");
+                    _showWarningDialog(); // Show warning for invalid QR codes
+                  }
+                } else {
                   setState(() {
-                    _isScanning = true; // Resume scanning when returning
+                    _isScanning = true;
                   });
-                });
+                }
               }
             },
           ),
@@ -190,6 +281,43 @@ class _QRScannerState extends State<QRScanner> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showWarningDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            "Oh No! Warning!",
+            style: TextStyle(fontFamily: 'Roboto', fontSize: 18, color: Colors.red),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(height: 10),
+              Text(
+                "The product might not be original. Please verify with the seller.",
+                style: TextStyle(fontFamily: 'Roboto', fontSize: 18, color: Colors.black),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+                setState(() {
+                  _isScanning = true; // Resume scanning when returning
+                });
+              },
+              child: Text("OK",
+                style: TextStyle(fontFamily: 'Roboto', fontSize: 15, color: Colors.black),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

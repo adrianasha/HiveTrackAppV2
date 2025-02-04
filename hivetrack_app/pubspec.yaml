@@ -76,6 +76,11 @@ flutter:
       - assets/BEE1.png
       - assets/agentBee.png
       - assets/beez.png
+      - assets/honey-details.png
+      - assets/cert.png
+      - assets/honeyjar.png
+      - assets/region.png
+      - assets/honeyagent.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:hivetrack_app/Dropships/DropshipDashboard.dart';
 import 'package:hivetrack_app/EssentialFunctions.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'dart:math';
@@ -21,6 +22,7 @@ class _DropshipQRScanState extends State<DropshipQRScan> with WidgetsBindingObse
   double _feedbackY = 0;
   Random _random = Random();
   Map<String, List<String>> _scannedData = {};
+  bool rebound = false;
 
   @override
   void initState() {
@@ -75,6 +77,40 @@ class _DropshipQRScanState extends State<DropshipQRScan> with WidgetsBindingObse
     });
   }
 
+  void scanError() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,  // Prevent dismissing by tapping outside
+      builder: (BuildContext context) {
+        return Center(  // Ensure it's centered
+          child: AlertDialog(
+            backgroundColor: Colors.white,
+            content: Text(
+              'The QR has been scanned.',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  rebound = false;
+                  Navigator.of(context).pop();  // Close the dialog
+                },
+                child: Text(
+                  'OK',
+                  style: TextStyle(fontSize: 16, color: Colors.blue),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,8 +136,11 @@ class _DropshipQRScanState extends State<DropshipQRScan> with WidgetsBindingObse
           if (_isCameraInitialized)
             Positioned.fill(
               child: MobileScanner(
-                controller: _cameraController,
-                  onDetect: (capture) {
+                  controller: _cameraController,
+                  onDetect: (capture) async {
+                    if (rebound == true) return;
+                    rebound = true;
+
                     final List<Barcode> barcodes = capture.barcodes;
                     if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
                       try {
@@ -109,17 +148,39 @@ class _DropshipQRScanState extends State<DropshipQRScan> with WidgetsBindingObse
                         if (barcodeJsonData is Map<String, dynamic> &&
                             barcodeJsonData.containsKey("parentRFID") &&
                             barcodeJsonData.containsKey("qrcode")) {
-                          setState(() {
-                            if (_scannedData.containsKey(barcodeJsonData["parentRFID"])) {
-                              if (!_scannedData[barcodeJsonData["parentRFID"]]!.contains(barcodeJsonData["qrcode"])) {
-                                _scannedData[barcodeJsonData["parentRFID"]]!.add(barcodeJsonData["qrcode"]);
-                                _showScanFeedback();
-                              }
+
+                          final userId = await getCurrentAuthUserId();
+                          var docSnapshot = await FirebaseFirestore.instance
+                              .collection("Dropship_Agent")
+                              .doc(userId) // Replace with dynamic ID if needed
+                              .get();
+
+                          if (docSnapshot.exists) {
+                            var data = docSnapshot.data();
+                            final companyLiveStorage = await WebSocketService().sendMessageAndWaitForResponse({
+                              "type": "fetchCompanyLiveStorage",
+                              "cid": data?["company_id"],
+                            });
+
+                            print("SSSSUUU");
+                            print(companyLiveStorage["LiveStorage"][barcodeJsonData["parentRFID"]][barcodeJsonData["qrcode"]]["CanBeSold"]);
+                            if (companyLiveStorage["LiveStorage"] is Map && companyLiveStorage["LiveStorage"].containsKey(barcodeJsonData["parentRFID"]) && companyLiveStorage["LiveStorage"][barcodeJsonData["parentRFID"]].containsKey(barcodeJsonData["qrcode"]) && companyLiveStorage["LiveStorage"][barcodeJsonData["parentRFID"]][barcodeJsonData["qrcode"]]["CanBeSold"] != (selectedMode + 1) && companyLiveStorage["LiveStorage"][barcodeJsonData["parentRFID"]][barcodeJsonData["qrcode"]]["CanBeSold"] < 3) {
+                              rebound = false;
+                              setState(() {
+                                if (_scannedData.containsKey(barcodeJsonData["parentRFID"])) {
+                                  if (!_scannedData[barcodeJsonData["parentRFID"]]!.contains(barcodeJsonData["qrcode"])) {
+                                    _scannedData[barcodeJsonData["parentRFID"]]!.add(barcodeJsonData["qrcode"]);
+                                    _showScanFeedback();
+                                  }
+                                } else {
+                                  _scannedData[barcodeJsonData["parentRFID"]] = [barcodeJsonData["qrcode"]];
+                                  _showScanFeedback();
+                                }
+                              });
                             } else {
-                              _scannedData[barcodeJsonData["parentRFID"]] = [barcodeJsonData["qrcode"]];
-                              _showScanFeedback();
+                              scanError();
                             }
-                          });
+                          }
                         }
                       } catch (e) {
                         print("Invalid JSON: ${barcodes.first.rawValue}");
@@ -314,7 +375,7 @@ class _DropshipQRScanState extends State<DropshipQRScan> with WidgetsBindingObse
 
                   if (docSnapshot.exists) {
                     var data = docSnapshot.data();
-                    final companyLiveStorage = await WebSocketService().sendMessageAndWaitForResponse({
+                    final qrscanLogic = await WebSocketService().sendMessageAndWaitForResponse({
                       "type": "updateDropshipAgentQRscan",
                       "userId": userId,
                       "scannedData": _scannedData,
@@ -344,8 +405,8 @@ class _DropshipQRScanState extends State<DropshipQRScan> with WidgetsBindingObse
                               SizedBox(height: 10),
                               Text(
                                 selectedMode == 0
-                                    ? "From: ${FetchParentUserId["ParentUserId"] ?? "Unknown"}\nTotal items: ${companyLiveStorage["jarsScanned"]} Jars"
-                                    : "Total items: ${companyLiveStorage["jarsScanned"]} Jars\nSold!",
+                                    ? "From: ${FetchParentUserId["ParentUserId"] ?? "Unknown"}\nTotal items: ${qrscanLogic["jarsScanned"]} Jars"
+                                    : "Total items: ${qrscanLogic["jarsScanned"]} Jars\nSold!",
                                 style: TextStyle(
                                   fontFamily: 'Roboto',
                                   fontSize: 16,
@@ -354,7 +415,13 @@ class _DropshipQRScanState extends State<DropshipQRScan> with WidgetsBindingObse
                               SizedBox(height: 20),
                               ElevatedButton(
                                 onPressed: () {
-                                  Navigator.of(context).pop();
+                                  //Navigator.of(context).pop();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => DropshipDashboard(),
+                                    ),
+                                  );
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.amber,

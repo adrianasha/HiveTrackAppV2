@@ -18,6 +18,7 @@ class ScanOut extends StatefulWidget {
 class _ScanOutState extends State<ScanOut> {
   bool isScanning = false;
   String? selectedAgent;
+  bool showWarningText = false; // Flag to show warning text
 
   @override
   Widget build(BuildContext context) {
@@ -105,25 +106,11 @@ class _ScanOutState extends State<ScanOut> {
                             ),
                           ),
                         ],
-                      )
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 20),
-                // const Text(
-                //   "Scanning box...",
-                //   style: TextStyle(
-                //     fontFamily: 'Roboto',
-                //     fontSize: 16,
-                //     color: Colors.black54,
-                //   ),
-                // ),
-                // const SizedBox(height: 10),
-                // LinearProgressIndicator(
-                //   value: 0.7, // Adjust the value dynamically if needed
-                //   color: Colors.yellow[700],
-                //   backgroundColor: Colors.yellow[200],
-                // ),
               ],
             ),
           ),
@@ -152,50 +139,50 @@ class _ScanOutState extends State<ScanOut> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: FutureBuilder<String?>(
-              future: getCurrentAuthUserId(), // Call the getRequester function here
+              future: getCurrentAuthUserId(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator()); // Show loading while data is being fetched
+                  return const Center(child: CircularProgressIndicator());
                 }
 
                 if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}')); // Handle errors
+                  return Center(child: Text('Error: ${snapshot.error}'));
                 }
 
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No requests found')); // Handle empty data
+                  return const Center(child: Text('No requests found'));
                 }
 
                 final uid = snapshot.data!;
                 return FutureBuilder<Map<String, dynamic>>(
-                  future: getUserDataWithParentName(uid), // Call the getRequester function here
+                  future: getUserDataWithParentName(uid),
                   builder: (context, secondSnapshot) {
                     if (secondSnapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator()); // Show loading while data is being fetched
+                      return const Center(child: CircularProgressIndicator());
                     }
 
                     if (secondSnapshot.hasError) {
-                      return Center(child: Text('Error: ${secondSnapshot.error}')); // Handle errors
+                      return Center(child: Text('Error: ${secondSnapshot.error}'));
                     }
 
                     if (!secondSnapshot.hasData || secondSnapshot.data!.isEmpty) {
-                      return const Center(child: Text('No requests found')); // Handle empty data
+                      return const Center(child: Text('No requests found'));
                     }
 
                     final userData = secondSnapshot.data;
                     return FutureBuilder<Map<String, dynamic>>(
-                      future: getAllVerifiedUsersByCID(userData?["user_data"]["company_id"], 1), // Call the getRequester function here
+                      future: getAllVerifiedUsersByCID(userData?["user_data"]["company_id"], 1),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator()); // Show loading while data is being fetched
+                          return const Center(child: CircularProgressIndicator());
                         }
 
                         if (snapshot.hasError) {
-                          return Center(child: Text('Error: ${snapshot.error}')); // Handle errors
+                          return Center(child: Text('Error: ${snapshot.error}'));
                         }
 
                         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return const Center(child: Text('No requests found')); // Handle empty data
+                          return const Center(child: Text('No requests found'));
                         }
 
                         final verifiedUserData = snapshot.data;
@@ -208,6 +195,7 @@ class _ScanOutState extends State<ScanOut> {
                           onChanged: (newValue) {
                             setState(() {
                               selectedAgent = newValue;
+                              showWarningText = false; // Reset warning when agent is selected
                             });
                           },
                           items: verifiedUserData!.entries.where((entry) {
@@ -231,6 +219,20 @@ class _ScanOutState extends State<ScanOut> {
 
           const SizedBox(height: 30),
 
+          // Show warning text if needed
+          if (showWarningText)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Text(
+                "Please choose Dropship Agent first",
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 16,
+                  color: Colors.red, // Red text color
+                ),
+              ),
+            ),
+
           // Start Scanning / Done Button Section
           Padding(
             padding: const EdgeInsets.all(20.0),
@@ -238,38 +240,41 @@ class _ScanOutState extends State<ScanOut> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () async {
-                  if (selectedAgent != null) {
-                    final dropship_docRef = FirebaseFirestore.instance
-                        .collection("Dropship_Agent")
-                        .doc(selectedAgent);
+                  if (selectedAgent == null) {
+                    setState(() {
+                      showWarningText = true; // Show warning if no agent is selected
+                    });
+                    return; // Exit early if no agent is selected
+                  }
 
-                    final userId = await getCurrentAuthUserId();
-                    final agent_docRef = FirebaseFirestore.instance
-                        .collection("Agent")
-                        .doc(userId);
+                  // If agent is selected, proceed with the existing logic
+                  final dropship_docRef = FirebaseFirestore.instance
+                      .collection("Dropship_Agent")
+                      .doc(selectedAgent);
 
-                    final agentSnapshot = await agent_docRef.get();
+                  final userId = await getCurrentAuthUserId();
+                  final agent_docRef = FirebaseFirestore.instance
+                      .collection("Agent")
+                      .doc(userId);
 
-                    if (agentSnapshot.exists) {
-                      final fullAgentData = agentSnapshot.data();
-                      dynamic agentData = fullAgentData?['Inventory'];
-                      int jars = agentData["StockOutBox"].length ?? 0;
+                  final agentSnapshot = await agent_docRef.get();
 
-                      await dropship_docRef.update({
-                        'Inventory.AwaitedJars': agentData["StockOutBox"]
-                      });
-                      await agent_docRef.update({
-                        'Inventory.StockOutBox': [],
-                      });
+                  if (agentSnapshot.exists) {
+                    final fullAgentData = agentSnapshot.data();
+                    dynamic agentData = fullAgentData?['Inventory'];
+                    int jars = agentData["StockOutBox"].length ?? 0;
 
-                      final dropshipData = (await dropship_docRef.get()).data();
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return SummaryDialog(tagId: dropshipData?["id"], totalBoxes: jars);
-                        },
-                      );
-                    }
+                    await dropship_docRef.update({
+                      'Inventory.AwaitedJars': agentData["StockOutBox"]
+                    });
+
+                    final dropshipData = (await dropship_docRef.get()).data();
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return SummaryDialog(tagId: dropshipData?["id"], totalBoxes: jars);
+                      },
+                    );
                   }
                 },
                 style: ElevatedButton.styleFrom(

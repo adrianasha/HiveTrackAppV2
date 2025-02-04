@@ -285,6 +285,7 @@ class DropshipListPopup extends StatelessWidget {
     print("agent fr ");
     print(agent);
     return Dialog(
+      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16.0),
       ),
@@ -297,20 +298,13 @@ class DropshipListPopup extends StatelessWidget {
           children: [
             const Text(
               'Dropship Agent List',
-              style: TextStyle(
-                fontFamily: 'Roboto',
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+              style: TextStyle(fontFamily: 'Roboto', fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'Agent: $agentID',
-              style: TextStyle(
-                fontFamily: 'Roboto',
-                fontSize: 16,
-                color: Colors.black,
+              style: TextStyle(fontFamily: 'Roboto', fontSize: 16, color: Colors.black,
               ),
             ),
             const SizedBox(height: 16),
@@ -334,22 +328,15 @@ class DropshipListPopup extends StatelessWidget {
 
                           return Container(
                             decoration: BoxDecoration(
-                              color: Colors.grey[100], // Background color
+                              color: Colors.amber[50], // Background color
                               borderRadius: BorderRadius.circular(10.0),
-                              border: Border.all(
-                                color: Colors.grey[300]!,
-                                width: 1.0,
-                              ),
                             ),
                             padding: const EdgeInsets.all(12.0),
                             margin: const EdgeInsets.only(bottom: 8.0), // Spacing between boxes
                             child: ListTile(
                               title: Text(
                                 agentData["name"],
-                                style: TextStyle(
-                                  fontFamily: 'Roboto',
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
+                                style: TextStyle(fontFamily: 'Roboto', fontSize: 15, fontWeight: FontWeight.bold,
                                 ),
                               ),
                               subtitle: Column(
@@ -357,9 +344,7 @@ class DropshipListPopup extends StatelessWidget {
                                 children: [
                                   Text(
                                     '${agentData["id"]}',
-                                    style: TextStyle(
-                                      fontFamily: 'Roboto',
-                                      fontSize: 15,
+                                    style: TextStyle(fontFamily: 'Roboto', fontSize: 15,
                                     ),
                                   ),
                                   Text(
@@ -373,9 +358,7 @@ class DropshipListPopup extends StatelessWidget {
                                   ),
                                   Text(
                                     'Joined on ${DateFormat('yyyy-MM-dd HH:mm:ss').format(agentData['created_at'].toDate()) ?? 'No joinDate'}',
-                                    style: TextStyle(
-                                      fontFamily: 'Roboto',
-                                      fontSize: 15,
+                                    style: TextStyle(fontFamily: 'Roboto', fontSize: 15,
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -394,176 +377,12 @@ class DropshipListPopup extends StatelessWidget {
                       );
                     }).toList()
                   ] else ...[
-                    // Container(
-                    //   decoration: BoxDecoration(
-                    //     color: Colors.grey[100], // Background color
-                    //     borderRadius: BorderRadius.circular(10.0),
-                    //     border: Border.all(
-                    //       color: Colors.grey[300]!,
-                    //       width: 1.0,
-                    //     ),
-                    //   ),
-                    //   padding: const EdgeInsets.all(12.0),
-                    //   margin: const EdgeInsets.only(bottom: 8.0), // Spacing between boxes
-                    //   child: ListTile(
-                    //     title: const Text(
-                    //       'Luna Inara',
-                    //       style: TextStyle(
-                    //         fontFamily: 'Roboto',
-                    //         fontSize: 15,
-                    //         fontWeight: FontWeight.bold,
-                    //       ),
-                    //     ),
-                    //     subtitle: Column(
-                    //       crossAxisAlignment: CrossAxisAlignment.start,
-                    //       children: [
-                    //         const Text(
-                    //           'DSAG10001\nSerdang, Selangor\nJoined on 9/12/2024',
-                    //           style: TextStyle(
-                    //             fontFamily: 'Roboto',
-                    //             fontSize: 15,
-                    //           ),
-                    //         ),
-                    //         const SizedBox(height: 8),
-                    //         DeleteButton(
-                    //           onDelete: () {
-                    //             ScaffoldMessenger.of(context).showSnackBar(
-                    //               const SnackBar(content: Text('Luna Inara deleted!')),
-                    //             );
-                    //           },
-                    //         ),
-                    //       ],
-                    //     ),
-                    //   ),
-                    // ),
                     Text(
-                      'binchilling',
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
+                      'No Dropships',
+                      style: TextStyle(fontFamily: 'Roboto', fontSize: 15, fontWeight: FontWeight.bold,
                       ),
                     )
                   ],
-                  // FutureBuilder<Map<String, dynamic>>(
-                  //   future: getAllVerifiedUsersByCID(dataMap["company_id"], 0), // Call your async function
-                  //   builder: (context, snapshot) {
-                  //     if (snapshot.connectionState == ConnectionState.waiting) {
-                  //       return CircularProgressIndicator(); // Show a loading indicator
-                  //     } else if (snapshot.hasError) {
-                  //       return Text('Error: ${snapshot.error}');
-                  //     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  //       return Text('No items available');
-                  //     }
-                  //
-                  //     final verifiedData = snapshot.data!;
-                  //
-                  //     return DropdownButtonFormField<String>(
-                  //       decoration: InputDecoration(
-                  //         border: OutlineInputBorder(),
-                  //       ),
-                  //       items: [
-                  //         ...verifiedData.entries.map((entry) {
-                  //           var agentId = entry.value["id"];
-                  //           var coveredAgentCount = entry.value["covered_agent"]?.length ?? 0;
-                  //
-                  //           return DropdownMenuItem(
-                  //             value: entry.key,
-                  //             child: Text('$agentId ($coveredAgentCount)'),
-                  //           );
-                  //         })
-                  //       ],
-                  //       onChanged: (value) {
-                  //         selectedAgentId = value;
-                  //       },
-                  //     );
-                  //   },
-                  // ),
-                  // Container(
-                  //   decoration: BoxDecoration(
-                  //     color: Colors.grey[100], // Background color
-                  //     borderRadius: BorderRadius.circular(10.0),
-                  //     border: Border.all(
-                  //       color: Colors.grey[300]!,
-                  //       width: 1.0,
-                  //     ),
-                  //   ),
-                  //   padding: const EdgeInsets.all(12.0),
-                  //   margin: const EdgeInsets.only(bottom: 8.0), // Spacing between boxes
-                  //   child: ListTile(
-                  //     title: const Text(
-                  //       'Luna Inara',
-                  //       style: TextStyle(
-                  //         fontFamily: 'Roboto',
-                  //         fontSize: 15,
-                  //         fontWeight: FontWeight.bold,
-                  //       ),
-                  //     ),
-                  //     subtitle: Column(
-                  //       crossAxisAlignment: CrossAxisAlignment.start,
-                  //       children: [
-                  //         const Text(
-                  //           'DSAG10001\nSerdang, Selangor\nJoined on 9/12/2024',
-                  //           style: TextStyle(
-                  //             fontFamily: 'Roboto',
-                  //             fontSize: 15,
-                  //           ),
-                  //         ),
-                  //         const SizedBox(height: 8),
-                  //         DeleteButton(
-                  //           onDelete: () {
-                  //             ScaffoldMessenger.of(context).showSnackBar(
-                  //               const SnackBar(content: Text('Luna Inara deleted!')),
-                  //             );
-                  //           },
-                  //         ),
-                  //       ],
-                  //     ),
-                  //   ),
-                  // ),
-                  // // Second box
-                  // Container(
-                  //   decoration: BoxDecoration(
-                  //     color: Colors.grey[100], // Background color
-                  //     borderRadius: BorderRadius.circular(8.0),
-                  //     border: Border.all(
-                  //       color: Colors.grey[300]!,
-                  //       width: 1.0,
-                  //     ),
-                  //   ),
-                  //   padding: const EdgeInsets.all(12.0),
-                  //   margin: const EdgeInsets.only(bottom: 5.0), // Spacing between boxes
-                  //   child: ListTile(
-                  //     title: const Text(
-                  //       'Thaqif Sha',
-                  //       style: TextStyle(
-                  //         fontFamily: 'Roboto',
-                  //         fontSize: 15,
-                  //         fontWeight: FontWeight.bold,
-                  //       ),
-                  //     ),
-                  //     subtitle: Column(
-                  //       crossAxisAlignment: CrossAxisAlignment.start,
-                  //       children: [
-                  //         const Text(
-                  //           'DSAG10003\nSerdang, Selangor\nJoined on 10/12/2024',
-                  //           style: TextStyle(
-                  //             fontFamily: 'Roboto',
-                  //             fontSize: 15,
-                  //           ),
-                  //         ),
-                  //         const SizedBox(height: 8),
-                  //         DeleteButton(
-                  //           onDelete: () {
-                  //             ScaffoldMessenger.of(context).showSnackBar(
-                  //               const SnackBar(content: Text('Thaqif Sha deleted!')),
-                  //             );
-                  //           },
-                  //         ),
-                  //       ],
-                  //     ),
-                  //   ),
-                  // ),
                 ],
               ),
             ),
@@ -576,7 +395,7 @@ class DropshipListPopup extends StatelessWidget {
                 },
                 child: const Text(
                   'Close',
-                  style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.amber),
+                  style: TextStyle(fontFamily: 'Roboto', fontSize: 14, color: Colors.amber, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -598,7 +417,7 @@ class DeleteButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: onDelete,
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white30,
+        backgroundColor: Colors.orange[200],
       ),
       child: const Text(
         'Delete Agent',

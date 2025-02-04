@@ -60,8 +60,8 @@ class CompanyDashboard extends StatelessWidget {
                     const SizedBox(height: 16),
                     _buildOverviewCard(
                       context,
-                      icon: Icons.bar_chart,
-                      label: 'Regional Sales',
+                      icon: Icons.share_location_rounded,
+                      label: 'Regional Coverage',
                       iconColor: Colors.yellow[700],
                       onTap: () {
                         Navigator.push(

@@ -52,29 +52,25 @@ class _DropshipDashboardState extends State<DropshipDashboard> {
           "type": "fetchDropShipAgentParentId",
           "uid": currentUserData!["selected_agent"]
         });
+
+        int beforAwaitedValue = 0;
+        data["Inventory"]["AwaitedJars"].forEach((rfid) async {
+          if (CompanyLiveStorage["LiveStorage"] != null && CompanyLiveStorage["LiveStorage"][rfid] != null) {
+            CompanyLiveStorage["LiveStorage"][rfid].forEach((key, value) {
+              if (value["CanBeSold"] != null && value["CanBeSold"] == 0) {
+                beforAwaitedValue = beforAwaitedValue + 1;
+              }
+            });
+          }
+        });
         setState(() {
           parentUserId = FetchParentUserId["ParentUserId"] ?? "Unknown";
           username = data["name"] ?? "Unknown";
-          stockInCount = data["Inventory"]["StockInJars"] is List
-              ? data["Inventory"]["StockInJars"].length
-              : (data["Inventory"]["StockInJars"] ?? 0);
-          stockOutCount = data["Inventory"]["StockOutJars"] is List
-              ? data["Inventory"]["StockOutJars"].length
-              : (data["Inventory"]["StockOutJars"] ?? 0);
-          availableStock = data["Inventory"]["AvailableJars"] is List
-              ? data["Inventory"]["AvailableJars"].length
-              : (data["Inventory"]["AvailableJars"] ?? 0);
-
-          data["Inventory"]["AwaitedJars"].forEach((rfid) async {
-            if (CompanyLiveStorage["LiveStorage"] != null && CompanyLiveStorage["LiveStorage"][rfid] != null) {
-              CompanyLiveStorage["LiveStorage"][rfid].forEach((key, value) {
-                if (value["CanBeSold"] != null && value["CanBeSold"] == 0) {
-                  awaitedJars = awaitedJars + 1;
-                }
-              });
-            }
-          });
-          if (awaitedJars > 0) {
+          stockInCount = data["Inventory"]["StockInJars"] ?? 0;
+          stockOutCount = data["Inventory"]["StockOutJars"] ?? 0;
+          availableStock = data["Inventory"]["AvailableJars"] ?? 0;
+          awaitedJars = beforAwaitedValue;
+          if (beforAwaitedValue > 0) {
             progress = 0.5;
           } else {
             progress = 1;
@@ -205,7 +201,12 @@ class _DropshipDashboardState extends State<DropshipDashboard> {
                     const SizedBox(height: 0),
                     // Show "No activities yet" if activity is completed
                     if (activityCompleted)
-                      const Text(" No activities yet", style: TextStyle(fontFamily: 'Roboto', fontSize: 14, fontWeight: FontWeight.normal, color: Colors.grey))
+                      const Center(
+                        child: Text(
+                          "No activities yet",
+                          style: TextStyle(fontFamily: 'Roboto', fontSize: 14, fontWeight: FontWeight.normal, color: Colors.grey),
+                        ),
+                      )
                     else
                       Text("Ordered Amounts: $awaitedJars Jars", style: TextStyle(fontFamily: 'Roboto', fontSize: 14, fontWeight: FontWeight.normal)),
                     const SizedBox(height: 10),
@@ -258,7 +259,9 @@ class _DropshipDashboardState extends State<DropshipDashboard> {
               // Scan Inventory Button
               GestureDetector(
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => DropshipQRScan()));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => DropshipQRScan())).then((_) async {
+                    fetchDropshipAgentData();
+                  });
                 },
                 child: Container(
                   width: double.infinity,

@@ -12,25 +12,31 @@ class WebSocketService {
   String? _url;
   String? _uid;
   final Map<String, Completer<dynamic>> _pendingRequests = {};
-  final Duration _reconnectDelay = Duration(seconds: 20);
+  final Duration _reconnectDelay = Duration(seconds: 45);
   bool _isReconnecting = false;
   int registerTried = 0;
 
   Future<void> connect(String url) async {
     _url = url;
+    _uid = await getCurrentAuthUserId();
 
     try {
       _webSocket = await WebSocket.connect(url);
+
+      if (_webSocket == null) {
+        throw Exception("WebSocket connection failed: Received null.");
+      }
+
       print('Connected to WebSocket at $url');
       _isReconnecting = false;
-      _uid = await getCurrentAuthUserId();
 
-      _webSocket?.listen((message) {
-        if (message == 'ping') {
-          _webSocket?.add('pong');
-          print('Sent: pong');
-        }
-        print('Received: $message');
+      _webSocket?.listen(
+            (message) {
+          if (message == 'ping') {
+            _webSocket?.add('pong');
+            print('Sent: pong');
+          }
+          print('Received: $message');
           try {
             _handleMessage(message);
           } catch (e) {
@@ -46,36 +52,40 @@ class WebSocketService {
           _reconnect();
         },
       );
-      await setUID(_uid!);
+
+      // Register user with WebSocket after connection is established
+      await setUID(_uid);
     } catch (e) {
       print('Failed to connect: $e');
       _reconnect();
     }
   }
 
-  Future<void> setUID(String uid) async {
-    _uid = uid;
-
+  Future<void> setUID(String? uid) async {
     try {
-      print('Set current websocket Uid: $uid');
+      //_uid = uid ?? "";
+      String clientType = (_uid == null) ? "Guest" : "User"; // Determine client type
+
+      print('Setting WebSocket UID as $clientType: $_uid');
+
       dynamic RegistrationResponse = await sendMessageAndWaitForResponse({
         'type': 'register',
-        'clientType': 'User',
-        'uid':_uid
+        'clientType': clientType,
+        'uid': _uid
       });
-      registerTried = registerTried + 1;
 
-      dynamic success = RegistrationResponse["success"];
-      if (success) {
-        print("Finished Register");
+      registerTried++;
+
+      if (RegistrationResponse != null && RegistrationResponse["success"]) {
+        print("WebSocket Registered Successfully as $clientType");
       } else {
         if (registerTried <= 3) {
-          setUID(_uid!);
+          //setUID(_uid); // Retry registration
         } else if (registerTried > 3 && registerTried <= 6) {
-          _uid = await getCurrentAuthUserId();
-          setUID(_uid!);
-        } else if (registerTried >= 6) {
-          registerTried = 0;
+          _uid = await getCurrentAuthUserId(); // Try fetching UID again
+          //setUID(_uid);
+        } else {
+          registerTried = 0; // Reset counter
         }
       }
     } catch (e) {
@@ -85,15 +95,22 @@ class WebSocketService {
   }
 
   void _reconnect() {
-    if (_isReconnecting) return;
+    if (_isReconnecting) {
+      print("Reconnect attempt skipped: Already trying.");
+      return;
+    }
 
     _isReconnecting = true;
-    print('Reconnecting in $_reconnectDelay...');
+    print('WebSocket reconnecting in $_reconnectDelay...');
+
     Future.delayed(_reconnectDelay, () {
       if (_url != null) {
-        print('Attempting reconnection...');
-        connect(_url!);
+        print('Attempting reconnection to $_url...');
+        connect(_url!).catchError((e) {
+          print("WebSocket reconnection failed: $e");
+        });
       } else {
+        print("Reconnection attempt failed: WebSocket URL is null.");
         _isReconnecting = false;
       }
     });
@@ -120,6 +137,16 @@ class WebSocketService {
   }
 
   Future<dynamic> sendMessageAndWaitForResponse(dynamic message) async {
+    if (_webSocket == null) {
+      print("WebSocket error: Connection is null. Cannot send message.");
+      return Future.error("WebSocket error: The connection was never established or has been closed.");
+    }
+
+    if (_webSocket!.readyState != WebSocket.open) {
+      print("WebSocket error: Connection is not open. Current state: ${_webSocket!.readyState}");
+      return Future.error("WebSocket error: Connection is in an invalid state (${_webSocket!.readyState}).");
+    }
+
     final Completer<dynamic> completer = Completer<dynamic>();
     final String requestID = generateCustomId(13, true, false);
 
